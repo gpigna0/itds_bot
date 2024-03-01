@@ -97,6 +97,8 @@ def roll_itds(dice=2, extra=0, score=0, skill=0, bonus_penalty=0, difficulty=1):
 import re
 rg=r"(?P<dice>\d+)d\s*(?P<drop>\d*)(\s*a(?P<skill>\d+)){0,1}(\s*(?P<bonus_sign>\+|\-)(?P<bonus_value>\d+)){0,1}(\s*vs\s*(?P<score>\d+)){0,1}"
 rgc=re.compile(rg, re.IGNORECASE)
+rb=r"[a-z]+"
+rbc=re.compile(rb, re.IGNORECASE)
 
 def parse_and_roll(msg):
   '''Interpreta un messaggio discord che contiene una specifica per il lancio di dadi ed esegue il lancio
@@ -134,6 +136,18 @@ intents.message_content = True # Il bot deve poter leggere almeno i messaggi
 # setup delle variabili globali del bot
 creator_process = {}  # Se è attivo il programma di creazione dei personaggi, va salvato l'oggetto corrispondente qui, con lo username dell'autore come chiave; questo consente di creare più personaggi contemporaneamente
 prompt = ["\n>>>\t",pexpect.EOF] # il prompt atteso dal programma di creazione dei personaggi, indica che la stampa del messaggio è pronta
+
+# Creazione della classe Btn
+# Al momento presente solo per il primo input
+# TODO: Fare in modo che la scelta venga passata a chargen
+# e che si passi all'input successivo
+class Btn(discord.ui.Button):
+    def __init__(self, name: str, sender):
+        super().__init__(label=name)
+        self.sender = sender
+    async def callback(self, interaction: discord.Interaction):
+        self.sender.sendline(self.label) #così non funziona
+        await interaction.response.edit_message(content=self.label, view=self.view)
 
 # gestione degli eventi 
 @client.event
@@ -187,7 +201,13 @@ async def on_message(msg):
     creator_process[author].expect(prompt)
     response = creator_process[author].before
     print("Creating character")
-    await msg.channel.send(response)
+    btn_str = str(response).split("\n").pop()
+    btn_labels = rbc.findall(btn_str)
+    # Costruzione del msg con i bottoni
+    vw = discord.ui.View()
+    for b in btn_labels:
+        vw.add_item(Btn(b, creator_process[author]))
+    await msg.channel.send(response, view=vw)
   # generazione di nomi
   if ('!n' in content or '!nomi' in content) and author not in creator_process:
     # impostazioni di default

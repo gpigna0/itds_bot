@@ -599,7 +599,8 @@ def sinput(nome, lis):
   r = None
   s = [ f'({lis.index(l)+1}) {l}' for l in lis ]
   while not r:
-    r = input(f"Scegliere un(a) {nome} tra: {', '.join(s)}\n>>>\t")
+    print(f"Scegliere un(a) {nome} tra:")
+    r = input(f"{', '.join(s)}\n>>>\t")
     try : 
       pos = int(r)-1
       if pos>=0 and pos<len(lis) : r=lis[pos]
