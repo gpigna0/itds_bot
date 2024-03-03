@@ -139,15 +139,14 @@ prompt = ["\n>>>\t",pexpect.EOF] # il prompt atteso dal programma di creazione d
 
 # Creazione della classe Btn
 # Al momento presente solo per il primo input
-# TODO: Fare in modo che la scelta venga passata a chargen
-# e che si passi all'input successivo
 class Btn(discord.ui.Button):
     def __init__(self, name: str, sender):
         super().__init__(label=name)
         self.sender = sender
     async def callback(self, interaction: discord.Interaction):
-        self.sender.sendline(self.label) #così non funziona
-        await interaction.response.edit_message(content=self.label, view=self.view)
+        self.sender.sendline(self.label)
+        self.sender.expect(prompt) # printare un ulteriore prompt in ./itdschargen per non leggere anche l'input successivo
+        await interaction.response.edit_message(content=f"Selected: {self.label}", view=self.view)
 
 # gestione degli eventi 
 @client.event
@@ -197,6 +196,9 @@ async def on_message(msg):
     del creator_process[author] # rimuove il creator_process
   # creazione guidata di un personaggio, inizializzazione
   if '!itdsc' in content and author not in creator_process:
+    # TODO: Definire una funzione che gestisca dall'inizio alla fine
+    # il processo di creazione del personaggio utilizzando solamente
+    # i message components inviati dal bot
     creator_process[author] = pexpect.spawnu(['./itdschargen.py']) # attiva il programma di creazione dei personaggi
     creator_process[author].expect(prompt)
     response = creator_process[author].before

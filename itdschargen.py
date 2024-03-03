@@ -606,6 +606,7 @@ def sinput(nome, lis):
       if pos>=0 and pos<len(lis) : r=lis[pos]
     except Exception: pass
     if r not in lis : r = None
+  print("\n>>>\t") # fa in modo che il prompt del prossimo input non venga letto dal component corrente
   return r.lower()
 
 def cinput(nome, ecls):    
