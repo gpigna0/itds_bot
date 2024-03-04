@@ -600,7 +600,7 @@ def sinput(nome, lis):
   s = [ f'({lis.index(l)+1}) {l}' for l in lis ]
   while not r:
     print(f"Scegliere un(a) {nome} tra:")
-    r = input(f"{', '.join(s)}\n>>>\t")
+    r = input(f"{', '.join(s)}<button>")
     try : 
       pos = int(r)-1
       if pos>=0 and pos<len(lis) : r=lis[pos]
@@ -636,12 +636,13 @@ def iinput(nome, min_=None, max_=None):
     return randint(min_,max_)
   r = None
   while not r:
-    r = input(f"{nome} ({min_ if min_ else 'N/A'}-{max_ if max_ else 'N/A'}):\n>>>\t")
+    r = input(f"{nome} ({min_ if min_ else 'N/A'}-{max_ if max_ else 'N/A'}):<txt_input>")
     try : 
       r = int(r)
       if min_ and r<min_ : r=None
       if max_ and r>max_ : r=None
     except Exception : r=None
+  print("\n>>>\t")
   return r
 
 def distanza_ceti(ceto1, ceto2):
@@ -687,8 +688,10 @@ def input_info_base(genere):
     luogo = choice(list(lingue_per_regione.keys()))
     nome = get_name(gender='male' if genere=='maschio' else 'female', language=lingue_per_regione[luogo])
   else :
-    nome  = input("Nome del personaggio:\n>>>\t")
-    luogo = input("Luogo di nascita:\n>>>\t")
+    nome  = input("Nome del personaggio:<txt_input>")
+    print("\n>>>\t")
+    luogo = input("Luogo di nascita:<txt_input>")
+    print("\n>>>\t")
   return nome, luogo
 
 def input_mestiere(pers):
