@@ -699,7 +699,9 @@ def input_mestiere(pers):
   if random_gen :
     return choice(list(professioni[pers.ceto].keys()))
   else :
-    return input("Mestiere:\n>>>\t")
+    mestiere = input("Mestiere:<txt_input>")
+    print("\n>>>\t")
+    return mestiere
 
 def input_cultura(pers):
   global random_gen
