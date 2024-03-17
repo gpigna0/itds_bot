@@ -123,61 +123,28 @@ def parse_and_roll(msg):
 import discord
 # Classe per gli input da bottone
 class Btn(discord.ui.Button):
-    def __init__(self, name: str, process, author):
+    def __init__(self, name: str, author):
         super().__init__(label=name)
-        self.process = process
         self.author = author
     async def callback(self, interaction: discord.Interaction):
-        self.process.sendline(self.label)
-        self.process.expect(prompt) # printare un ulteriore prompt in ./itdschargen per non leggere anche l'input successivo
-        await interaction.response.send_message(content=self.author)
-
-
-# Bottone che permette di aprire il modal
-class TxtInputRevealer(discord.ui.Button):
-    def __init__(self, process, author):
-        super().__init__(label="Insert")
-        self.process = process
-        self.author = author
-    async def callback(self, interaction: discord.Interaction):
-        await interaction.response.send_modal(TxtIn(self.process, self.author))#(self.process, self.author))
-
-
-# Modal contenete il text input
-class TxtIn(discord.ui.Modal, title="Txt"):
-    def __init__(self, process, author):
-        super().__init__()
-        self.process = process
-        self.author = author
-
-    text = discord.ui.TextInput(label="inpt", placeholder="Insert")
-
-    async def on_submit(self, interaction: discord.Interaction):
-        self.process.sendline(self.text.value)
-        self.process.expect(prompt)
-        await interaction.response.send_message(content=self.author)
+        await interaction.response.send_message(content=f"{self.author} ha scelto: {self.label}")
 
 
 # Funzione per il processo di creazione del personaggio
 # Sulla base del prompt matchato da pexpect sceglie
 # il tipo di component da utilizzare
-async def chargen(msg, process, author):
-    comp_type = process.expect(component_prompt)
-    response = process.before
+async def chargen(msg, process, author, comp_type, response):
     if comp_type==0: # Button
         btn_str = str(response).split("\n").pop() # Estrazione delle scelte
         btn_labels = rbc.findall(btn_str) # Parsing delle scelte
         vw = discord.ui.View() # Costruzione della view
         for b in btn_labels: # Ogni possibilità di scelta viene associata ad un bottone
-            vw.add_item(Btn(b, process, author))
+            vw.add_item(Btn(b, author))
         await msg.channel.send(response, view=vw)
     if comp_type==1: # Text input
-        # I modals vanno inviati con discord.Interaction.response.send_modal()
-        # È necessario generare un component (button) che a sua volta
-        # generi il modal quando si interagisce con esso
-        vw = discord.ui.View()
-        vw.add_item(TxtInputRevealer(process, author))
-        await msg.channel.send(f"Clicca il bottone per inserire: {response}", view=vw)
+        # si limita a inviare la richiesta. L'input viene letto
+        # dal messaggio inviato dall'utente
+        await msg.channel.send(response)
     if comp_type==2: # Choice menu (ancora da implementare)
         pass
 
@@ -214,26 +181,26 @@ async def on_message(msg):
   global creator_process
   author = str(msg.author).split("#")[0] # estrae il nome dell'autore del messaggio
   content = msg.content
+  isbot = False # serve nel processo di creazione per decidere come parsare content
   if msg.author==client.user:
-    if content not in creator_process:
+    isbot = True
+    if content.split(" ")[0] not in creator_process:
       return # ignora i propri messaggi
     else:
-      author = content
+      content = content.split(" ")
+      author = content[0]
   # creazione di un personaggio già iniziata
   if author in creator_process: # se è attivo il processo di creazione, interagisce con esso
-        await chargen(msg, creator_process[author], author) # WARN: pexpect.EOF ancora da gestire
-
-    # creator_process[author].sendline(content)  # invia il contenuto del messaggio 
-    # p = creator_process[author].expect(prompt) # attende che sia completata sulla pipe la risposta dal programma di creazione
-    # response = creator_process[author].before  # estrae la risposta dalla pipe: tutto ciò che è stato stampato
-    # if p==0: # prompt[0] è il vero prompt, indica che la creazione non è finita
-    #   await msg.channel.send(response) # invia la risposta
-    # else :   # prompt[1] è la fine dell'input, indica che la creazione è finita e si può preparare il PDF
-    #   nome  = response.split("\n")[-2].strip() # estrae il nome del personaggio dall'output del programma
-    #   creator_process[author] = pexpect.spawnu(f'./pdffields.py json/{re.escape(nome)}.json') # chiama il convertitore a PDF
-    #   creator_process[author].expect(pexpect.EOF) # attende il completamento della conversione
-    #   await msg.channel.send(f"**{author}** ha creato {nome}", file=discord.File(f'./pdf/{nome}.pdf')) # invia il file PDF sulla chat
-    #   del creator_process[author] # rimuove il creator_process, riabilitando gli altri comandi
+        if isbot and len(content) > 1: # qualora fossero necessari ulteriori messaggi del bot si usa come trigger ['ha', 'scelto']
+            creator_process[author].sendline(content[3]) # al momento si tiene conto che l'input sia uno solo
+            creator_process[author].expect(prompt)
+        if not isbot: # gli input da parte dell'utente vengono riconosciuti
+            creator_process[author].sendline(content) # al momento si tiene conto che l'input sia uno solo
+            creator_process[author].expect(prompt)
+        comp_type = creator_process[author].expect(component_prompt)
+        resp = creator_process[author].before
+        await chargen(msg, creator_process[author], author, comp_type, resp) # WARN: pexpect.EOF ancora da gestire
+        return
   # tutti i comandi successivi sono vincolati a creator_process == None: durante la creazione del personaggio non è possibile eseguire altri comandi
   # prova a parsare il messaggio come lancio di dadi ed eseguirlo
   res = parse_and_roll(content)   
@@ -259,7 +226,9 @@ async def on_message(msg):
     # creator_process[author].expect(prompt)
     # response = creator_process[author].before
     print("Creating character")
-    await chargen(msg, creator_process[author], author)
+    comp_type = creator_process[author].expect(component_prompt)
+    resp = creator_process[author].before
+    await chargen(msg, creator_process[author], author, comp_type, resp)
   # generazione di nomi
   if ('!n' in content or '!nomi' in content) and author not in creator_process:
     # impostazioni di default
