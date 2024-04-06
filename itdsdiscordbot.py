@@ -116,6 +116,8 @@ rg = r"(?P<dice>\d+)d\s*(?P<drop>\d*)(\s*a(?P<skill>\d+)){0,1}(\s*(?P<bonus_sign
 rgc = re.compile(rg, re.IGNORECASE)
 rb = r"(?:[a-z]+ ?)+[a-z]+"
 rbc = re.compile(rb, re.IGNORECASE)
+rqt = r"\d"
+rqtc = re.compile(rqt)
 
 
 def parse_and_roll(msg):
@@ -159,6 +161,18 @@ class Btn(discord.ui.Button):
         )
 
 
+# Classe per gli input a selezione multipla
+class Menu(discord.ui.Select):
+    def __init__(self, qta: int, opts, auhtor):
+        super().__init__(min_values=qta, max_values=qta, options=opts)
+        self.author = auhtor
+
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.send_message(
+            content=f"{self.author} ha scelto: {' '.join(self.values)}"
+        )
+
+
 # Funzione per il processo di creazione del personaggio
 # Sulla base del prompt matchato da pexpect sceglie
 # il tipo di component da utilizzare
@@ -174,8 +188,18 @@ async def chargen(msg, process, author, comp_type, response):
         # si limita a inviare la richiesta. L'input viene letto
         # dal messaggio inviato dall'utente
         await msg.channel.send(response)
-    if comp_type == 2:  # Choice menu (ancora da implementare)
-        pass
+    if comp_type == 2:
+        resp = str(response).split("\n")
+        # Parsing della penultima riga di response dove è contenuto il numero di elementi da selezionare
+        qta = [int(n) for n in rqtc.findall(resp.pop(-2))][0]
+        opts_str = resp.pop()
+        opts_val = rbc.findall(opts_str)
+        opts = []
+        for o in opts_val:
+            opts.append(discord.SelectOption(label=o))
+        vw = discord.ui.View()
+        vw.add_item(Menu(qta, opts, author))
+        await msg.channel.send(response, view=vw)
 
 
 # Il resto dell'applicazione è più o meno adattata da bot.py
@@ -191,10 +215,8 @@ intents.message_content = True  # Il bot deve poter leggere almeno i messaggi
 
 # setup delle variabili globali del bot
 creator_process = {}  # Se è attivo il programma di creazione dei personaggi, va salvato l'oggetto corrispondente qui, con lo username dell'autore come chiave; questo consente di creare più personaggi contemporaneamente
-prompt = [
-    "\n>>>\t",
-    pexpect.EOF,
-]  # il prompt atteso dal programma di creazione dei personaggi, indica che la stampa del messaggio è pronta
+# il prompt atteso dal programma di creazione dei personaggi, indica che la stampa del messaggio è pronta
+prompt = ["\n>>>\t", pexpect.EOF]
 component_prompt = ["<button>", "<txt_input>", "<choice>"]
 
 
@@ -221,26 +243,19 @@ async def on_message(msg):
             content = content.split(" ")
             author = content[0]
     # creazione di un personaggio già iniziata
-    if (
-        author in creator_process
-    ):  # se è attivo il processo di creazione, interagisce con esso
-        if (
-            isbot and len(content) > 1
-        ):  # qualora fossero necessari ulteriori messaggi del bot si usa come trigger ['ha', 'scelto']
-            creator_process[author].sendline(
-                content[3]
-            )  # al momento si tiene conto che l'input sia uno solo
+    if author in creator_process:
+        if isbot and len(content) > 1:
+            # la gestione di scelte multiple è gestita dal itdschargen
+            creator_process[author].sendline(" ".join(content[3:]))
             creator_process[author].expect(prompt)
-        if not isbot:  # gli input da parte dell'utente vengono riconosciuti
-            creator_process[author].sendline(
-                content
-            )  # al momento si tiene conto che l'input sia uno solo
+        # gli input da parte dell'utente vengono riconosciuti separatamente
+        if not isbot:
+            creator_process[author].sendline(content)
             creator_process[author].expect(prompt)
         comp_type = creator_process[author].expect(component_prompt)
         resp = creator_process[author].before
-        await chargen(
-            msg, creator_process[author], author, comp_type, resp
-        )  # WARN: pexpect.EOF ancora da gestire
+        # WARN: pexpect.EOF ancora da gestire
+        await chargen(msg, creator_process[author], author, comp_type, resp)
         return
     # tutti i comandi successivi sono vincolati a creator_process == None: durante la creazione del personaggio non è possibile eseguire altri comandi
     # prova a parsare il messaggio come lancio di dadi ed eseguirlo
@@ -249,9 +264,8 @@ async def on_message(msg):
         await msg.channel.send(f"**{author}**" + res)
     # creazione di un personaggio casuale; questo comando è autocontenuto, quindi creator_process viene creato e poi distrutto
     if "!itdsrand" in content and author not in creator_process:
-        creator_process[author] = pexpect.spawnu(
-            "./itdschargen.py r"
-        )  # attiva il programma di creazione dei personaggi
+        # attiva il programma di creazione dei personaggi
+        creator_process[author] = pexpect.spawnu("./itdschargen.py r")
         creator_process[author].expect(pexpect.EOF)
         response = creator_process[author].before
         nome = response.split("\n")[-2].strip()
@@ -266,12 +280,8 @@ async def on_message(msg):
         del creator_process[author]  # rimuove il creator_process
     # creazione guidata di un personaggio, inizializzazione
     if "!itdsc" in content and author not in creator_process:
-        # TODO: Definire una funzione che gestisca dall'inizio alla fine
-        # il processo di creazione del personaggio utilizzando solamente
-        # i message components inviati dal bot
-        creator_process[author] = pexpect.spawnu(
-            ["./itdschargen.py"]
-        )  # attiva il programma di creazione dei personaggi
+        # attiva il programma di creazione dei personaggi
+        creator_process[author] = pexpect.spawnu(["./itdschargen.py"])
         # creator_process[author].expect(prompt)
         # response = creator_process[author].before
         print("Creating character")

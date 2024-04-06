@@ -8,7 +8,7 @@ from typing import List
 from dataclasses_json import dataclass_json
 from dataclasses import dataclass, field
 from enum import Enum
-from random import choice, randint
+from random import choice, sample, randint
 from strenum import StrEnum
 from string import capwords
 from equip import TipoOggetto, Qualità, Conio
@@ -1037,6 +1037,22 @@ class Personaggio:
         return True
 
 
+# Controllo della validità per input multipli
+def check_valid(inp, lis):
+    out = []
+    for i in inp:
+        try:
+            pos = int(i) - 1
+            if pos >= 0 and pos < len(lis):
+                i = lis[pos]
+        except Exception:
+            pass
+        if i not in lis:
+            return None
+        out.append(i.lower())
+    return out
+
+
 # GESTIONE INPUT O GENERAZIONE CASUALE
 def sinput(nome, lis):
     global random_gen
@@ -1059,14 +1075,38 @@ def sinput(nome, lis):
             pass
         if r not in lis:
             r = None
-    print(
-        "\n>>>\t"
-    )  # fa in modo che il prompt del prossimo input non venga letto dal component corrente
+        # fa in modo che il prompt del prossimo input non venga letto dal component corrente
+        # se c'è un errore la richiesta viene ripetuta generando un nuovo component
+        print("\n>>>\t")
     return r.lower()
 
 
-def cinput(nome, ecls):
-    return sinput(nome, [m.name for m in ecls])
+def minput(nome, lis, qta):
+    global random_gen
+    if not len(lis):
+        raise ITDSException(
+            f"{nome} non può essere scelto, perché non ci sono opzioni disponibili"
+        )
+    if random_gen:
+        return sample(lis, qta)
+    r = None
+    s = [f"({lis.index(l)+1}) {l}" for l in lis]
+    while not r:
+        print(f"Scegliere {qta} {nome} tra:")
+        r = input(f"{', '.join(s)}<choice>")
+        r = r.split(" ")
+        r = check_valid(r, lis)
+        print("\n>>>\t")
+    # in questo caso r è un array di stringhe
+    return r
+
+
+def cinput(nome, ecls, qta=1):
+    # se non viene specificata una quantità di scelte si usa sinput(), altrimenti minput()
+    if qta == 1:
+        return sinput(nome, [m.name for m in ecls])
+    else:
+        return minput(nome, [m.name for m in ecls], qta)
 
 
 def ainput(nome, ecls, pers=None, remaining=1):
@@ -1209,11 +1249,8 @@ def input_cultura(pers):
     if random_gen:
         return tratti_per_regione[pers.luogo_nascita]
     else:
-        cultura1 = cinput("tratto culturale", Culture)
-        while True:  # assicura due tratti diversi
-            cultura2 = cinput("tratto culturale", Culture)
-            if cultura2 != cultura1:
-                break
+        # Il component utilizzato rende già impossibile scegliere 2 volte la stessa cultura
+        cultura1, cultura2 = cinput("tratto culturale", Culture, 2)
         return cultura1, cultura2
 
 
