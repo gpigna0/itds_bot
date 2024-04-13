@@ -166,12 +166,15 @@ class Btn(discord.ui.Button):
 
 # Classe per gli input a selezione multipla
 class Menu(discord.ui.Select):
-    def __init__(self, qta: int, opts, auhtor):
-        super().__init__(min_values=qta, max_values=qta, options=opts)
+    def __init__(self, opts, auhtor, qta, qta_max=None):
+        if qta_max is None:
+            qta_max = qta
+        super().__init__(min_values=qta, max_values=qta_max, options=opts)
         self.author = auhtor
 
     async def callback(self, interaction: discord.Interaction):
-        await interaction.response.send_message(
+        if not len(self.values):
+            return
         for child in self.view.children:
             child.disabled = True
         await interaction.response.edit_message(view=self.view)
