@@ -1182,7 +1182,7 @@ def iinput(nome, min_=None, max_=None):
                 r = None
         except Exception:
             r = None
-    print("\n>>>\t")
+        print("\n>>>\t")
     return r
 
 
