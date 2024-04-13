@@ -156,7 +156,10 @@ class Btn(discord.ui.Button):
         self.author = author
 
     async def callback(self, interaction: discord.Interaction):
-        await interaction.response.send_message(
+        for child in self.view.children:
+            child.disabled = True
+        await interaction.response.edit_message(view=self.view)
+        await interaction.followup.send(
             content=f"{self.author} ha scelto: {self.label}"
         )
 
@@ -169,6 +172,10 @@ class Menu(discord.ui.Select):
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.send_message(
+        for child in self.view.children:
+            child.disabled = True
+        await interaction.response.edit_message(view=self.view)
+        await interaction.followup.send(
             content=f"{self.author} ha scelto: {' '.join(self.values)}"
         )
 
