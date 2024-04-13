@@ -188,7 +188,7 @@ class Menu(discord.ui.Select):
 # il tipo di component da utilizzare
 async def chargen(msg, process, author, comp_type, response):
     if comp_type == 0:  # Button
-        btn_str = str(response).split("\n").pop()  # Estrazione delle scelte
+        btn_str = str(response).split("\n")[-1]  # Estrazione delle scelte
         btn_labels = rbc.findall(btn_str)  # Parsing delle scelte
         vw = discord.ui.View()  # Costruzione della view
         for b in btn_labels:  # Ogni possibilità di scelta viene associata ad un bottone
@@ -201,15 +201,33 @@ async def chargen(msg, process, author, comp_type, response):
     if comp_type == 2:
         resp = str(response).split("\n")
         # Parsing della penultima riga di response dove è contenuto il numero di elementi da selezionare
-        qta = [int(n) for n in rqtc.findall(resp.pop(-2))][0]
-        opts_str = resp.pop()
+        qta = [int(n) for n in rqtc.findall(resp[-2])][0]
+        opts_str = resp[-1]
         opts_val = rbc.findall(opts_str)
         opts = []
         for o in opts_val:
             opts.append(discord.SelectOption(label=o))
         vw = discord.ui.View()
-        vw.add_item(Menu(qta, opts, author))
+        vw.add_item(Menu(opts, author, qta))
         await msg.channel.send(response, view=vw)
+    if comp_type == 3:
+        resp = str(response).split("\n")
+        sel_info = resp[:4]
+        vw = discord.ui.View()
+        for opts_str in sel_info:
+            print(opts_str)
+            ceto, dist, *opts_val = opts_str.split(", ")
+            opts = []
+            for o in opts_val:
+                print(o)
+                opts.append(
+                    discord.SelectOption(
+                        label=o,
+                        description=f"Ceto: {ceto}. Distanza dal tuo ceto: {dist}",
+                    )
+                )
+            vw.add_item(Menu(opts, author, 1, 1))
+        await msg.channel.send("\n".join(resp[-2:]), view=vw)
 
 
 # Il resto dell'applicazione è più o meno adattata da bot.py
@@ -227,7 +245,7 @@ intents.message_content = True  # Il bot deve poter leggere almeno i messaggi
 creator_process = {}  # Se è attivo il programma di creazione dei personaggi, va salvato l'oggetto corrispondente qui, con lo username dell'autore come chiave; questo consente di creare più personaggi contemporaneamente
 # il prompt atteso dal programma di creazione dei personaggi, indica che la stampa del messaggio è pronta
 prompt = ["\n>>>\t", pexpect.EOF]
-component_prompt = ["<button>", "<txt_input>", "<choice>"]
+component_prompt = ["<button>", "<txt_input>", "<choice>", "<mest-select>"]
 
 
 # gestione degli eventi webcor
