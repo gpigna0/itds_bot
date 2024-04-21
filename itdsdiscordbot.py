@@ -147,6 +147,7 @@ def parse_and_roll(msg):
 
 
 import discord
+import json
 
 
 # Classe per gli input da bottone
@@ -212,19 +213,14 @@ async def chargen(msg, process, author, comp_type, response):
         await msg.channel.send(response, view=vw)
     if comp_type == 3:
         resp = str(response).split("\n")
-        sel_info = resp[:4]
+        # Parsing JSON del dizionario creato in itdschargen
+        sel_dict = json.loads(resp[-3])
         vw = discord.ui.View()
-        for opts_str in sel_info:
-            print(opts_str)
-            ceto, dist, *opts_val = opts_str.split(", ")
-            opts = []
-            for o in opts_val:
-                print(o)
-                opts.append(
-                    discord.SelectOption(
-                        label=o,
-                        description=f"Ceto: {ceto}. Distanza dal tuo ceto: {dist}",
-                    )
+        opts = []
+        for key in list(sel_dict.keys()):
+            opts.append(
+                discord.SelectOption(
+                    label=key,
                 )
             vw.add_item(Menu(opts, author, 1, 1))
         await msg.channel.send("\n".join(resp[-2:]), view=vw)
@@ -245,7 +241,7 @@ intents.message_content = True  # Il bot deve poter leggere almeno i messaggi
 creator_process = {}  # Se è attivo il programma di creazione dei personaggi, va salvato l'oggetto corrispondente qui, con lo username dell'autore come chiave; questo consente di creare più personaggi contemporaneamente
 # il prompt atteso dal programma di creazione dei personaggi, indica che la stampa del messaggio è pronta
 prompt = ["\n>>>\t", pexpect.EOF]
-component_prompt = ["<button>", "<txt_input>", "<choice>", "<mest-select>"]
+component_prompt = ["<button>", "<txt_input>", "<choice>", "<tree-select>"]
 
 
 # gestione degli eventi webcor

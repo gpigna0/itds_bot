@@ -5,6 +5,7 @@ __version__ = "1.0"
 __doc__ = """Generazione guidata o casuale di personaggi de Il Tempo della Spada e compilazione delle schede PDF"""
 
 from typing import List
+import json
 from dataclasses_json import dataclass_json
 from dataclasses import dataclass, field
 from enum import Enum
@@ -1112,7 +1113,7 @@ def cinput(nome, ecls, qta=1):
         return minput(nome, [m.name for m in ecls], qta)
 
 
-def ainput(nome, mdic, pers=None, remaining=1):
+def ainput(nome, dic, pers=None, remaining=1):
     global random_gen
     if random_gen and remaining > 1:
         ab = list(professioni[pers.ceto][pers.mestiere]["abilità"])
@@ -1143,16 +1144,14 @@ def ainput(nome, mdic, pers=None, remaining=1):
         # di appartenenza per essere inserite in 4 select diversi.
         # La gestione dell'input rimane molto simile a sinput()
         lis = sum([mdic[c] for c in mdic.keys()], [])
+        dic_str = json.dumps(dic)
+        lis = sum([dic[c] for c in dic.keys()], [])
         r = None
         s = [f"({lis.index(l)+1}) {l}" for l in lis]
         while not r:
-            # Per ogni ceto printa le info necessarie alla costruzione del messaggio
-            for ceto in list(mdic.keys()):
-                print(
-                    f"{ceto}, {abs(distanza_ceti(pers.ceto, ceto))}, {', '.join(mdic[ceto])}"
-                )
-            print(f"Scegliere un'{nome} tra:")
-            r = input(f"{', '.join(s)}<mest-select>")
+            print(dic_str)
+            print(f"Scegliere un(a) {nome} tra:")
+            r = input(f"{', '.join(s)}<tree-select>")
             try:
                 pos = int(r) - 1
                 if pos >= 0 and pos < len(lis):
