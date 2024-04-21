@@ -738,6 +738,10 @@ data = {
 }
 
 mestieri = {c: data["ceto"][c]["mestiere"] for c in data["ceto"]}
+# dizionario per la scelta delle abilità libere
+abLibere = mestieri | {
+    c: data["caratteristiche"][c]["abilità"] for c in data["caratteristiche"]
+}
 
 from equip import equip, Arma, Armatura, Oggetto
 
@@ -1290,75 +1294,74 @@ def creazione(random=False):
     global random_gen
     random_gen = random
 
-    # genere = cinput("genere", Genere)
-    # nome, luogo = input_info_base(genere)
-    #
-    # anno = iinput("Anno di nascita:", 1000, 1400)
-    # p = Personaggio(nome, luogo, anno, genere)
-    p = Personaggio("Ee", "AL", 1234, "maschio")
-    # punti_car = 54
-    # count = 5  # contatore delle caratteristiche a cui assegnare punti, esclusa quella presente
-    # for c in Caratteristiche:
-    #     while True:
-    #         car = iinput(f"{c.name} (punti residui={punti_car}) ", 5, 13)
-    #         if count * 5 + car > punti_car:
-    #             continue  # conta se rimangono abbastanza punti per allocare tutte le caratteristiche residue, in caso contrario ripete la richiesta
-    #         count -= 1
-    #         punti_car -= car
-    #         p.caratteristiche[c.name].caratteristica = car
-    #         p.caratteristiche[c.name].modificatore = mod_base(car)
-    #         break
-    # # assegna grado 1 a tutte le abilità di base
-    # for a in p.abilità:
-    #     for c in Caratteristiche:
-    #         if data["caratteristiche"][c.name]["base"] == a:
-    #             p.abilità[a].grado = 1
-    # # Tratti culturali
-    # cultura1, cultura2 = input_cultura(p)
-    # p.cultura = (cultura1, cultura2)
-    # data["culture"][cultura1]["vantaggio"](p)
-    # data["culture"][cultura2]["vantaggio"](p)
-    # s1 = sinput("dado extra", data["culture"][cultura1]["dado extra"])
-    # p.abilità[s1].dado_extra += 1
-    # s2 = sinput("dado extra", data["culture"][cultura2]["dado extra"])
-    # p.abilità[s2].dado_extra += 1
-    # # Assegna i valori se il modificatore di audacia è maggiore di 0
-    # punti_valore = max(0, p.mod("audacia"))
-    # timeout = 0
-    # if punti_valore > 0:
-    #     v1 = sinput("valore", data["culture"][cultura1]["valori"])
-    #     v2 = sinput("valore", data["culture"][cultura2]["valori"])
-    #     while punti_valore > 0 and timeout < 10:
-    #         v = sinput(
-    #             f"valore a cui aggiungere un punto ({punti_valore} punti residui)",
-    #             [v1, v2],
-    #         )
-    #         if p.valori[v] < 3:
-    #             p.valori[v] += 1
-    #             punti_valore -= 1
-    #         else:
-    #             timeout += 1
-    #             print(f"{v} ha già raggiunto il valore massimo")
-    # # Ceto e professione
-    # p.retaggio_init()
-    # while True:
-    #     ceto = cinput("ceto sociale", Ceti)
-    #     if p.retaggio >= data["ceto"][ceto]["retaggio"]:
-    #         break  # verifica che il personaggio abbia abbastanza punti retaggio per il ceto scelto.
-    # p.ceto = ceto
-    # p.retaggio -= data["ceto"][ceto]["retaggio"]
-    # p.fama += data["ceto"][ceto]["retaggio"]
-    # p.denaro = calcolo_denaro(data["ceto"][ceto]["denaro iniziale"][0])
-    # if p.retaggio < 0:
-    #     raise ITDSException(
-    #         "Personaggi con modificatore di gratia negativo non possono essere nobili!"
-    #     )  # questa eccezione non dovrebbe mai verificarsi
-    # mestiere = input_mestiere(
-    #     p
-    # )  # al momento il mestiere è solo una stringa di testo senza particolare significato
-    # p.mestiere = mestiere
-    # # print(p.mestiere)
-    # # Abilità del mestiere
+    genere = cinput("genere", Genere)
+    nome, luogo = input_info_base(genere)
+
+    anno = iinput("Anno di nascita:", 1000, 1400)
+    p = Personaggio(nome, luogo, anno, genere)
+    punti_car = 54
+    count = 5  # contatore delle caratteristiche a cui assegnare punti, esclusa quella presente
+    for c in Caratteristiche:
+        while True:
+            car = iinput(f"{c.name} (punti residui={punti_car}) ", 5, 13)
+            if count * 5 + car > punti_car:
+                continue  # conta se rimangono abbastanza punti per allocare tutte le caratteristiche residue, in caso contrario ripete la richiesta
+            count -= 1
+            punti_car -= car
+            p.caratteristiche[c.name].caratteristica = car
+            p.caratteristiche[c.name].modificatore = mod_base(car)
+            break
+    # assegna grado 1 a tutte le abilità di base
+    for a in p.abilità:
+        for c in Caratteristiche:
+            if data["caratteristiche"][c.name]["base"] == a:
+                p.abilità[a].grado = 1
+    # Tratti culturali
+    cultura1, cultura2 = input_cultura(p)
+    p.cultura = (cultura1, cultura2)
+    data["culture"][cultura1]["vantaggio"](p)
+    data["culture"][cultura2]["vantaggio"](p)
+    s1 = sinput("dado extra", data["culture"][cultura1]["dado extra"])
+    p.abilità[s1].dado_extra += 1
+    s2 = sinput("dado extra", data["culture"][cultura2]["dado extra"])
+    p.abilità[s2].dado_extra += 1
+    # Assegna i valori se il modificatore di audacia è maggiore di 0
+    punti_valore = max(0, p.mod("audacia"))
+    timeout = 0
+    if punti_valore > 0:
+        v1 = sinput("valore", data["culture"][cultura1]["valori"])
+        v2 = sinput("valore", data["culture"][cultura2]["valori"])
+        while punti_valore > 0 and timeout < 10:
+            v = sinput(
+                f"valore a cui aggiungere un punto ({punti_valore} punti residui)",
+                [v1, v2],
+            )
+            if p.valori[v] < 3:
+                p.valori[v] += 1
+                punti_valore -= 1
+            else:
+                timeout += 1
+                print(f"{v} ha già raggiunto il valore massimo")
+    # Ceto e professione
+    p.retaggio_init()
+    while True:
+        ceto = cinput("ceto sociale", Ceti)
+        if p.retaggio >= data["ceto"][ceto]["retaggio"]:
+            break  # verifica che il personaggio abbia abbastanza punti retaggio per il ceto scelto.
+    p.ceto = ceto
+    p.retaggio -= data["ceto"][ceto]["retaggio"]
+    p.fama += data["ceto"][ceto]["retaggio"]
+    p.denaro = calcolo_denaro(data["ceto"][ceto]["denaro iniziale"][0])
+    if p.retaggio < 0:
+        raise ITDSException(
+            "Personaggi con modificatore di gratia negativo non possono essere nobili!"
+        )  # questa eccezione non dovrebbe mai verificarsi
+    mestiere = input_mestiere(
+        p
+    )  # al momento il mestiere è solo una stringa di testo senza particolare significato
+    p.mestiere = mestiere
+    # print(p.mestiere)
+    # Abilità del mestiere
     p_mestiere = 6
     abilità_già_scelte = []
     while p_mestiere > 0:
