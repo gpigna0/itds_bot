@@ -187,6 +187,29 @@ class Menu(discord.ui.Select):
 
 
 # Funzione per il processo di creazione del personaggio
+# INFO: MainMenu permette di selezionare quale set di opzioni visualizzare
+# basandosi sulle chiavi del dizionario passato al costruttore
+# Eventualmente è possibile espandere fino a quattro la quantità di set da visualizzare
+class MainMenu(Menu):
+    def __init__(self, opts, author, dic, qta=1, qta_max=None, placeholder=None):
+        super().__init__(opts, author, qta, qta_max, placeholder)
+        self.dic = dic
+
+    async def callback(self, interaction: discord.Interaction):
+        opts = []
+        # Costruisce le opzioni per il nuovo select
+        for val in self.dic[self.values[0]]:
+            opts.append(discord.SelectOption(label=val))
+        # Rimuove tutti gli elementi della view a parte sé stesso
+        for child in self.view.children:
+            if child is self:
+                continue
+            self.view.remove_item(child)
+        # Aggiorna la view inserendo il nuovo menu
+        self.view.add_item(Menu(opts, self.author))
+        await interaction.response.edit_message(view=self.view)
+
+
 # Sulla base del prompt matchato da pexpect sceglie
 # il tipo di component da utilizzare
 async def chargen(msg, process, author, comp_type, response):
@@ -224,7 +247,16 @@ async def chargen(msg, process, author, comp_type, response):
                 discord.SelectOption(
                     label=key,
                 )
-            vw.add_item(Menu(opts, author, 1, 1))
+            )
+        vw.add_item(
+            MainMenu(
+                opts,
+                author,
+                sel_dict,
+                1,
+                placeholder="Scegli una categoria da visualizzare",
+            )
+        )
         await msg.channel.send("\n".join(resp[-2:]), view=vw)
 
 
