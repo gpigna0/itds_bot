@@ -159,13 +159,15 @@ class Btn(discord.ui.Button):
     async def callback(self, interaction: discord.Interaction):
         for child in self.view.children:
             child.disabled = True
+        # Aggiorna la view disabilitando i components
         await interaction.response.edit_message(view=self.view)
+        # Invia il messaggio con le scelte effettuate
         await interaction.followup.send(
             content=f"{self.author} ha scelto: {self.label}"
         )
 
 
-# Classe per gli input a selezione multipla
+# Classi per gli input a selezione multipla
 class Menu(discord.ui.Select):
     def __init__(self, opts, auhtor, qta=1, qta_max=None, placeholder=None):
         if qta_max is None:
@@ -180,13 +182,14 @@ class Menu(discord.ui.Select):
             return
         for child in self.view.children:
             child.disabled = True
+        # Aggiorna la view disabilitando i components
         await interaction.response.edit_message(view=self.view)
+        # Invia il messaggio con le scelte effettuate
         await interaction.followup.send(
             content=f"{self.author} ha scelto: {' '.join(self.values)}"
         )
 
 
-# Funzione per il processo di creazione del personaggio
 # INFO: MainMenu permette di selezionare quale set di opzioni visualizzare
 # basandosi sulle chiavi del dizionario passato al costruttore
 # Eventualmente è possibile espandere fino a quattro la quantità di set da visualizzare
@@ -210,6 +213,7 @@ class MainMenu(Menu):
         await interaction.response.edit_message(view=self.view)
 
 
+# INFO: Funzione per il processo di creazione del personaggio
 # Sulla base del prompt matchato da pexpect sceglie
 # il tipo di component da utilizzare
 async def chargen(msg, process, author, comp_type, response):

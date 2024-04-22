@@ -738,6 +738,10 @@ data = {
     },
 }
 
+# INFO: I seguenti dizionari sono utilizzati per agevolare la costruzione
+#       di component che presentano più del massimo di 25 opioni imposto da Discord
+
+# dizionario per la scelta delle abilità di mestiere
 mestieri = {c: data["ceto"][c]["mestiere"] for c in data["ceto"]}
 # dizionario per la scelta delle abilità libere
 abLibere = mestieri | {
@@ -1137,13 +1141,11 @@ def ainput(nome, dic, pers=None, remaining=1):
             print("Tentativo di scegliere una abilità professionale fallito", e)
             pass
     else:
-        # Discord limita il numero di buttons inseribili in una view a 25
-        # Lo stesso vale per le opzioni nei select. Tuttavia è possibile
-        # inserire un select in ognuna delle 5 righe disponibili nella
-        # view. Le abilità vengono quindi raggruppate sulla base del ceto
-        # di appartenenza per essere inserite in 4 select diversi.
-        # La gestione dell'input rimane molto simile a sinput()
-        lis = sum([mdic[c] for c in mdic.keys()], [])
+        # INFO: Il dizionario viene convertito in una stringa con json.dumps()
+        #       per essere utilizzato per la creazione dei component in itdsdiscordbot,
+        #       ma viene anche convertito in lista per renderlo compatibile
+        #       con l'input da messaggio dell'utente
+        #       La gestione dell'input rimane molto simile a sinput()
         dic_str = json.dumps(dic)
         lis = sum([dic[c] for c in dic.keys()], [])
         r = None
