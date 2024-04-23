@@ -742,9 +742,9 @@ data = {
 #       di component che presentano più del massimo di 25 opioni imposto da Discord
 
 # dizionario per la scelta delle abilità di mestiere
-mestieri = {c: data["ceto"][c]["mestiere"] for c in data["ceto"]}
+abMestiere = {c: data["ceto"][c]["mestiere"] for c in data["ceto"]}
 # dizionario per la scelta delle abilità libere
-abLibere = mestieri | {
+abLibere = abMestiere | {
     c: data["caratteristiche"][c]["abilità"] for c in data["caratteristiche"]
 }
 
@@ -1368,7 +1368,7 @@ def creazione(random=False):
     while p_mestiere > 0:
         ab = ainput(
             f"abilità del mestiere (punti residui {p_mestiere})",
-            mestieri,
+            abMestiere,
             p,
             p_mestiere,
         )
