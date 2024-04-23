@@ -1416,7 +1416,7 @@ def creazione(random=False):
     # Abilità libere
     p_libere = p.caratteristiche["mens"].caratteristica
     while p_libere > 0:
-        ab = cinput(f"abilità libere (punti residui {p_libere})", AbLibere)
+        ab = ainput(f"abilità libere (punti residui {p_libere})", abLibere, p, p_libere)
         d = distanza_abilità(p.ceto, ab)
         if cultura1 == "urbana" or cultura2 == "urbana":
             if d > 0:
