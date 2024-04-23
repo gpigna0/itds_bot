@@ -178,8 +178,6 @@ class Menu(discord.ui.Select):
         self.author = auhtor
 
     async def callback(self, interaction: discord.Interaction):
-        if not len(self.values):
-            return
         for child in self.view.children:
             child.disabled = True
         # Aggiorna la view disabilitando i components
