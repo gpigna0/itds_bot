@@ -184,7 +184,7 @@ class Menu(discord.ui.Select):
         await interaction.response.edit_message(view=self.view)
         # Invia il messaggio con le scelte effettuate
         await interaction.followup.send(
-            content=f"{self.author} ha scelto: {' '.join(self.values)}"
+            content=f"{self.author} ha scelto: {', '.join(self.values)}"
         )
 
 

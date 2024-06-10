@@ -1102,7 +1102,7 @@ def minput(nome, lis, qta):
     while not r:
         print(f"Scegliere {qta} {nome} tra:")
         r = input(f"{', '.join(s)}<choice>")
-        r = r.split(" ")
+        r = r.split(", ")
         r = check_valid(r, lis)
         print("\n>>>\t")
     # in questo caso r è un array di stringhe
