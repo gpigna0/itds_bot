@@ -738,16 +738,6 @@ data = {
     },
 }
 
-# INFO: I seguenti dizionari sono utilizzati per agevolare la costruzione
-#       di component che presentano più del massimo di 25 opioni imposto da Discord
-
-# dizionario per la scelta delle abilità di mestiere
-abMestiere = {c: data["ceto"][c]["mestiere"] for c in data["ceto"]}
-# dizionario per la scelta delle abilità libere
-abLibere = abMestiere | {
-    c: data["caratteristiche"][c]["abilità"] for c in data["caratteristiche"]
-}
-
 from equip import equip, Arma, Armatura, Oggetto
 
 data["armi"] = equip.armi
@@ -773,6 +763,15 @@ lingue_to_ita = {
     "Basque": "Basco",
 }
 
+# INFO: I seguenti dizionari sono utilizzati per agevolare la costruzione
+#       di component che presentano più del massimo di 25 opioni imposto da Discord
+
+# dizionario per la scelta delle abilità di mestiere
+abMestiere = { c: data["ceto"][c]["mestiere"] for c in data["ceto"] }
+# dizionario per la scelta delle abilità libere
+abLibere = abMestiere | { c: data["caratteristiche"][c]["abilità"] for c in data["caratteristiche"] }
+# dizionario per la scelta delle armi
+armi = { t[1]: { arma: data["armi"][arma] for arma in data["armi"] if data["armi"][arma].tipo == t[0] } for t in [("P", "Punta"), ("T", "Taglio"), ("B", "Botta")] }
 
 # Carica i dati esterni dai file YAML corrispondenti
 import yaml
