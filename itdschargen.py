@@ -1141,29 +1141,32 @@ def ainput(nome, dic, pers=None, remaining=1):
             print("Tentativo di scegliere una abilità professionale fallito", e)
             pass
     else:
-        # INFO: Il dizionario viene convertito in una stringa con json.dumps()
-        #       per essere utilizzato per la creazione dei component in itdsdiscordbot,
-        #       ma viene anche convertito in lista per renderlo compatibile
-        #       con l'input da messaggio dell'utente
-        #       La gestione dell'input rimane molto simile a sinput()
-        dic_str = json.dumps(dic)
-        lis = sum([dic[c] for c in dic.keys()], [])
-        r = None
-        s = [f"({lis.index(l)+1}) {l}" for l in lis]
-        while not r:
-            print(dic_str)
-            print(f"Scegliere un(a) {nome} tra:")
-            r = input(f"{', '.join(s)}<tree-select>")
-            try:
-                pos = int(r) - 1
-                if pos >= 0 and pos < len(lis):
-                    r = lis[pos]
-            except Exception:
-                pass
-            if r not in lis:
-                r = None
-            print("\n>>>\t")
-        return r.lower()
+        return tinput(nome, dic)
+
+def tinput(nome, dic):
+    # INFO: Il dizionario viene convertito in una stringa con json.dumps()
+    #       per essere utilizzato per la creazione dei component in itdsdiscordbot,
+    #       ma viene anche convertito in lista per renderlo compatibile
+    #       con l'input da messaggio dell'utente
+    #       La gestione dell'input rimane molto simile a sinput()
+    dic_str = json.dumps(dic)
+    lis = sum([dic[c] for c in dic.keys()], [])
+    r = None
+    s = [f"({lis.index(l)+1}) {l}" for l in lis]
+    while not r:
+        print(dic_str)
+        print(f"Scegliere un(a) {nome} tra:")
+        r = input(f"{', '.join(s)}<tree-select>")
+        try:
+            pos = int(r) - 1
+            if pos >= 0 and pos < len(lis):
+                r = lis[pos]
+        except Exception:
+            pass
+        if r not in lis:
+            r = None
+        print("\n>>>\t")
+    return r.lower()
 
 
 def iinput(nome, min_=None, max_=None):
@@ -1514,7 +1517,7 @@ def creazione(random=False):
             break
     larmi = []
     while len(p.armi) < 5:
-        arma = sinput("arma", list(data["armi"].keys()))
+        arma = tinput("arma", list(data["armi"].keys()))
         q = "buona" if "militare" in p.cultura else cinput("qualità", Qualità)
         arma_obj = data["armi"][arma].qualità_oggetto(q)
         if (
