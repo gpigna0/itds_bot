@@ -1451,12 +1451,20 @@ def creazione(random=False):
     p.riflessi_init()
 
     # Eventi
+    # La scelta è multipla. Se si incontra una
+    # exception non è ncessario ripetere tutte le scelte,
+    # ma solo quelle non ancora registrate.
+    # Le scelte duplicate vengono evitate rimuovendole
+    # quando vengono registrate
+    # WARN: Va ancora testato il corretto funzionamento in caso di errore
+    opts = list(data["eventi"].keys())
     while p.retaggio > 0:
-        ev = sinput("evento", list(data["eventi"].keys()))
-        if ev not in p.eventi:
+        evnt = minput("evento", opts, p.retaggio)
+        for ev in evnt:
             try:
-                data["eventi"][ev](p)
+                data["eventi"][ev](p)  # Potrebbe lanciare una Exception
                 p.eventi.append(ev)
+                opts.remove(ev)
                 p.retaggio -= 1
             except Exception as e:
                 print(e)
@@ -1464,16 +1472,16 @@ def creazione(random=False):
     # Addestramento
     ab3 = 3 if "esperienza" in p.eventi else 2
     ab2 = 10 if "esperienza" in p.eventi else 8
-    while ab3 > 0:
-        scelte = p.abilità_a_livello(1)
-        scelta = sinput("abilità da portare al grado 3", scelte)
-        p.incrementa_abilità(scelta, 3)
-        ab3 -= 1
-    while ab2 > 0:
-        scelte = p.abilità_a_livello(1)
-        scelta = sinput("abilità da portare al grado 2", scelte)
-        p.incrementa_abilità(scelta, 2)
-        ab2 -= 1
+    # ab3
+    scelte = p.abilità_a_livello(1)
+    scelta = minput("abilità da portare al grado 3", scelte, ab3)
+    for sc in scelta:
+        p.incrementa_abilità(sc, 3)
+    # ab2
+    scelte = p.abilità_a_livello(1)
+    scelta = minput("abilità da portare al grado 2", scelte, ab2)
+    for sc in scelta:
+        p.incrementa_abilità(sc, 2)
 
     # Lingue conosciute
     n_lingue = 1 + p.mod("mens") + p.abilità["usi e costumi"].grado // 2
@@ -1534,16 +1542,11 @@ def creazione(random=False):
     logg = []
 
     for categoria in TipoOggetto:
-        oggetti = [
-            o for o in data["oggetti"] if data["oggetti"][o].categoria == categoria
-        ]
+        oggetti = [ o for o in data["oggetti"] if data["oggetti"][o].categoria == categoria ]
         if (
             categoria not in ["armi", "armature"]
             and len(oggetti)
-            and sinput(
-                f"acquistare oggetti dalla categoria {categoria}? ", ["sì", "no"]
-            )
-            == "sì"
+            and sinput(f"acquistare oggetti dalla categoria {categoria}? ", ["sì", "no"]) == "sì"
         ):
             while True:
                 oggetto = sinput("oggetto", oggetti)
@@ -1552,10 +1555,7 @@ def creazione(random=False):
                 if ogg.costo < p.denaro:
                     p.denaro -= ogg.costo
                     logg.append(ogg)
-                if (
-                    sinput(f"acquistare altri oggetti ({categoria})? ", ["sì", "no"])
-                    == "no"
-                ):
+                if ( sinput(f"acquistare altri oggetti ({categoria})? ", ["sì", "no"]) == "no" ):
                     break
     p.equipaggiamento = logg
 
