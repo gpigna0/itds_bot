@@ -1494,12 +1494,17 @@ def creazione(random=False):
     if luogo in lingue_per_regione:
         p.lingue.append(lingue_to_ita[lingue_per_regione[luogo]])
         n_lingue -= 1
-    for i in range(n_lingue):
-        while True:
-            l = cinput("lingua", Lingue)
-            if l not in p.lingue and l not in ["Latino", "Greco antico", "Aramaico"]:
+    if n_lingue > 0:
+        # il component usato per cinput() con scelte multiple non ammette duplicati
+        # bisogna solo escludere Latino, Greco e Aramaico
+        lingue_ammissibili = [l for l in Lingue if l not in ["Latino", "Greco antico", "Aramaico"]]
+        lng = cinput(f"lingu{'a' if n_lingue == 1 else 'e'}", lingue_ammissibili, n_lingue)
+        # append() va gestito diversamente a seconda della quantità di scelte
+        if n_lingue == 1:
+            p.lingue.append(lng)
+        else:
+            for l in lng:
                 p.lingue.append(l)
-                break
 
     # Scelta dei focus
     for a in p.abilità:
@@ -1543,8 +1548,7 @@ def creazione(random=False):
 
     for categoria in TipoOggetto:
         oggetti = [ o for o in data["oggetti"] if data["oggetti"][o].categoria == categoria ]
-        if (
-            categoria not in ["armi", "armature"]
+        if (categoria not in ["armi", "armature"]
             and len(oggetti)
             and sinput(f"acquistare oggetti dalla categoria {categoria}? ", ["sì", "no"]) == "sì"
         ):
