@@ -1292,6 +1292,26 @@ class ITDSException(Exception):
     pass
 
 
+# INFO: Funzione per la selezione degli eventi
+# La scelta è multipla. Se si incontra una
+# exception non è ncessario ripetere tutte le scelte:
+# quelle valide vengono comunque registrate.
+# Quando un evento viene inserito nella lista del personaggio,
+# viene anche rimosso dalla lista delle opzioni in modo
+# che se servisse ripetere alcune scelte non ci saranno duplicati
+def sel_eventi(p):
+    opts = list(data["eventi"].keys())
+    while p.retaggio > 0:
+        evnt = minput("evento", opts, p.retaggio)
+        for ev in evnt:
+            try:
+                data["eventi"][ev](p)  # Potrebbe lanciare una Exception
+                p.eventi.append(ev)
+                opts.remove(ev)
+                p.retaggio -= 1
+            except Exception:
+                pass
+
 # CREAZIONE DEL PERSONAGGIO
 def creazione(random=False):
     # Definisce se la generazione è casuale oppure no. Serve una variabile globale per tenere traccia di tutti i metodi di input
@@ -1451,24 +1471,7 @@ def creazione(random=False):
     p.ingombro_base_init()
     p.riflessi_init()
 
-    # Eventi
-    # La scelta è multipla. Se si incontra una
-    # exception non è ncessario ripetere tutte le scelte,
-    # ma solo quelle non ancora registrate.
-    # Le scelte duplicate vengono evitate rimuovendole
-    # quando vengono registrate
-    # WARN: Va ancora testato il corretto funzionamento in caso di errore
-    opts = list(data["eventi"].keys())
-    while p.retaggio > 0:
-        evnt = minput("evento", opts, p.retaggio)
-        for ev in evnt:
-            try:
-                data["eventi"][ev](p)  # Potrebbe lanciare una Exception
-                p.eventi.append(ev)
-                opts.remove(ev)
-                p.retaggio -= 1
-            except Exception as e:
-                print(e)
+    sel_eventi(p)
 
     # Addestramento
     ab3 = 3 if "esperienza" in p.eventi else 2
