@@ -1098,7 +1098,7 @@ def minput(nome, lis, qta):
         return sample(lis, qta)
     r = None
     s = [f"({lis.index(l)+1}) {l}" for l in lis]
-    while not r:
+    while not r or len(r) != qta:
         print(f"Scegliere {qta} {nome} tra:")
         r = input(f"{', '.join(s)}<choice>")
         r = r.split(", ")
@@ -1141,6 +1141,7 @@ def ainput(nome, dic, pers=None, remaining=1):
             pass
     else:
         return tinput(nome, dic)
+
 
 def tinput(nome, dic):
     # INFO: Il dizionario viene convertito in una stringa con json.dumps()
