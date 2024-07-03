@@ -150,6 +150,33 @@ import discord
 import json
 
 
+# Modal che contiene le caselle di testo per i vari campi da inserire
+class TxtInput(discord.ui.Modal, title="Scrivi nelle caselle qui sotto"):
+    def __init__(self, author: str, boxes: list[str]):
+        super().__init__()
+        self.author = author
+        for box in boxes:
+            self.add_item(
+                discord.ui.TextInput(
+                    label=box,
+                    required=True
+                )
+            )
+
+    async def on_submit(self, interaction: discord.Interaction):
+        msg = ", ".join([c.value for c in self.children])
+        await interaction.response.send_message(f"{self.author} ha scelto: {msg}")
+
+# Classe che genera il bottone per aprire il Modal con le caselle di testo
+class ModalBtn(discord.ui.View):
+    def __init__(self, author: str, boxes: list[str]):
+        super().__init__()
+        self.author = author
+        self.boxes = boxes
+    @discord.ui.button(label="Inserisci", style=discord.ButtonStyle.blurple)
+    async def spawn_modal(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(TxtInput(self.author, self.boxes))
+
 # Classe per gli input da bottone
 class Btn(discord.ui.Button):
     def __init__(self, name: str, author):
@@ -223,9 +250,10 @@ async def chargen(msg, process, author, comp_type, response):
             vw.add_item(Btn(b, author))
         await msg.channel.send(response, view=vw)
     if comp_type == 1:  # Text input
-        # si limita a inviare la richiesta. L'input viene letto
-        # dal messaggio inviato dall'utente
-        await msg.channel.send(response)
+        boxes = response.split("\n")[-1].replace(":", "").split(", ")
+        vw = ModalBtn(author, boxes)
+        await msg.channel.send(response, view=vw)
+
     if comp_type == 2:
         resp = str(response).split("\n")
         # Parsing della penultima riga di response dove è contenuto il numero di elementi da selezionare

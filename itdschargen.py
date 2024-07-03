@@ -1250,7 +1250,7 @@ def input_abilità_speciale(tipo, pers, mestiere=False):
         )
 
 
-def input_info_base(genere):
+def input_info_base(genere, min, max):
     global random_gen
     if random_gen:
         from namegen import get_name
@@ -1260,12 +1260,22 @@ def input_info_base(genere):
             gender="male" if genere == "maschio" else "female",
             language=lingue_per_regione[luogo],
         )
+        anno = randint(min, max)
     else:
-        nome = input("Nome del personaggio:<txt_input>")
-        print("\n>>>\t")
-        luogo = input("Luogo di nascita:<txt_input>")
-        print("\n>>>\t")
-    return nome, luogo
+        nome = None
+        luogo = None
+        anno = None
+        while anno is None or not nome or not luogo:
+            r = input(f"Nome del personaggio, luogo di nascita, anno di nascita ({min}-{max}):<txt_input>")
+            nome, luogo, anno = r.split(", ")
+            try:
+                anno = int(anno)
+                if anno < min or anno > max:
+                    anno = None
+            except Exception:
+                anno = None
+            print("\n>>>\t")
+    return nome, luogo, anno
 
 
 def input_mestiere(pers):
@@ -1319,9 +1329,8 @@ def creazione(random=False):
     random_gen = random
 
     genere = cinput("genere", Genere)
-    nome, luogo = input_info_base(genere)
+    nome, luogo, anno = input_info_base(genere, 1000, 1400)
 
-    anno = iinput("Anno di nascita:", 1000, 1400)
     p = Personaggio(nome, luogo, anno, genere)
     punti_car = 54
     count = 5  # contatore delle caratteristiche a cui assegnare punti, esclusa quella presente
