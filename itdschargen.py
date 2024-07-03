@@ -1054,7 +1054,8 @@ def check_valid(inp, lis):
                 i = lis[pos]
         except Exception:
             pass
-        if i not in lis:
+        # return None se i non è un input valido o se è già presente in lista
+        if i not in lis or i in out:
             return None
         out.append(i.lower())
     return out
@@ -1439,9 +1440,7 @@ def creazione(random=False):
                 p.abilità[ab].mestiere = True
             p_mestiere -= d
         else:
-            print(
-                f'Abilità "{ab}" troppo costosa, {d} punti contro un residuo di {p_mestiere} punti'
-            )
+            print(f'Abilità "{ab}" troppo costosa, {d} punti contro un residuo di {p_mestiere} punti')
     p.tentazione = cinput("tentazione (opzionale)", Tentazioni)
     if p.tentazione != "nessuna":
         p.retaggio += 1
@@ -1509,7 +1508,7 @@ def creazione(random=False):
         n_lingue -= 1
     if n_lingue > 0:
         # il component usato per cinput() con scelte multiple non ammette duplicati
-        # bisogna solo escludere Latino, Greco e Aramaico
+        # Escludendo Latino, Greco e Aramaico, non c'è il rischio di inserire lingue non valide nell'input
         lingue_ammissibili = [l for l in Lingue if l not in ["Latino", "Greco antico", "Aramaico"]]
         lng = cinput(f"lingu{'a' if n_lingue == 1 else 'e'}", lingue_ammissibili, n_lingue)
         # append() va gestito diversamente a seconda della quantità di scelte
@@ -1530,9 +1529,7 @@ def creazione(random=False):
         armatura = sinput("armatura", list(data["armature"].keys()))
         q = "buona" if "militare" in p.cultura else cinput("qualità", Qualità)
         armatura_obj = data["armature"][armatura].qualità_oggetto(q)
-        if (
-            "militare" in p.cultura and data["armature"][armatura]["costo"] < p.denaro
-        ):  # applica il bonus della cultura militare
+        if ("militare" in p.cultura and data["armature"][armatura]["costo"] < p.denaro):  # applica il bonus della cultura militare
             p.denaro -= data["armature"][armatura]["costo"]
             p.armatura = armatura_obj
             break
@@ -1545,9 +1542,7 @@ def creazione(random=False):
         arma = tinput("arma", list(data["armi"].keys()))
         q = "buona" if "militare" in p.cultura else cinput("qualità", Qualità)
         arma_obj = data["armi"][arma].qualità_oggetto(q)
-        if (
-            "militare" in p.cultura and data["armi"][arma]["costo"] < p.denaro
-        ):  # applica il bonus della cultura militare
+        if ("militare" in p.cultura and data["armi"][arma]["costo"] < p.denaro):  # applica il bonus della cultura militare
             p.denaro -= data["armi"][arma]["costo"]
             larmi.append(arma_obj)
         elif arma_obj.costo < p.denaro:

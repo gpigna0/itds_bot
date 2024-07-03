@@ -20,11 +20,6 @@ except ImportError:
     print("Using random")
     rand = lambda x: randint(0, x - 1)
 
-try:
-    from secrets import random as rnd
-except ImportError:
-    from random import random as rnd
-
 
 # gestione dei tiri di dado
 def d(n, faces):
@@ -116,8 +111,6 @@ rg = r"(?P<dice>\d+)d\s*(?P<drop>\d*)(\s*a(?P<skill>\d+)){0,1}(\s*(?P<bonus_sign
 rgc = re.compile(rg, re.IGNORECASE)
 rb = r"(?:[a-zà-ùá-ú]+ ?)+[a-zà-ùá-ú]+"
 rbc = re.compile(rb, re.IGNORECASE)
-rqt = r"\d"
-rqtc = re.compile(rqt)
 
 
 def parse_and_roll(msg):
@@ -134,15 +127,11 @@ def parse_and_roll(msg):
             d[x] = 0
     print(d)
     return roll_itds(
-        dice=int(d["dice"])
-        - int(
-            d["drop"]
-        ),  # qui rimuove i dadi extra dal totale, poiché roll li considera in automatico
+        dice=int(d["dice"]) - int(d["drop"]),  # qui rimuove i dadi extra dal totale, poiché roll li considera in automatico
         extra=int(d["drop"]),
         score=int(d["score"]),
         skill=int(d["skill"]),
-        bonus_penalty=int(d["bonus_value"])
-        * (-1 if d["bonus_sign"] == "-" else 1),  # converte il segno +/-
+        bonus_penalty=int(d["bonus_value"]) * (-1 if d["bonus_sign"] == "-" else 1),  # converte il segno +/-
     )
 
 
@@ -241,23 +230,24 @@ class MainMenu(Menu):
 # INFO: Funzione per il processo di creazione del personaggio
 # Sulla base del prompt matchato da pexpect sceglie
 # il tipo di component da utilizzare
-async def chargen(msg, process, author, comp_type, response):
+async def chargen(msg, author: str, comp_type: int, response: str):
     if comp_type == 0:  # Button
-        btn_str = str(response).split("\n")[-1]  # Estrazione delle scelte
+        btn_str = response.split("\n")[-1]  # Estrazione delle scelte
         btn_labels = rbc.findall(btn_str)  # Parsing delle scelte
         vw = discord.ui.View()  # Costruzione della view
         for b in btn_labels:  # Ogni possibilità di scelta viene associata ad un bottone
             vw.add_item(Btn(b, author))
         await msg.channel.send(response, view=vw)
+
     if comp_type == 1:  # Text input
         boxes = response.split("\n")[-1].replace(":", "").split(", ")
         vw = ModalBtn(author, boxes)
         await msg.channel.send(response, view=vw)
 
     if comp_type == 2:
-        resp = str(response).split("\n")
+        resp = response.split("\n")
         # Parsing della penultima riga di response dove è contenuto il numero di elementi da selezionare
-        qta = [int(n) for n in rqtc.findall(resp[-2])][0]
+        qta = re.findall(r"\d+", resp[-2])[0] #rqtc.findall(resp[-2])][0]
         opts_str = resp[-1]
         opts_val = rbc.findall(opts_str)
         opts = []
@@ -266,18 +256,15 @@ async def chargen(msg, process, author, comp_type, response):
         vw = discord.ui.View()
         vw.add_item(Menu(opts, author, qta))
         await msg.channel.send(response, view=vw)
+
     if comp_type == 3:
-        resp = str(response).split("\n")
+        resp = response.split("\n")
         # Parsing JSON del dizionario creato in itdschargen
         sel_dict = json.loads(resp[-3])
         vw = discord.ui.View()
         opts = []
         for key in list(sel_dict.keys()):
-            opts.append(
-                discord.SelectOption(
-                    label=key,
-                )
-            )
+            opts.append(discord.SelectOption(label=key))
         vw.add_item(
             MainMenu(
                 opts,
@@ -343,7 +330,7 @@ async def on_message(msg):
         comp_type = creator_process[author].expect(component_prompt)
         resp = creator_process[author].before
         # WARN: pexpect.EOF ancora da gestire
-        await chargen(msg, creator_process[author], author, comp_type, resp)
+        await chargen(msg, author, comp_type, resp)
         return
     # tutti i comandi successivi sono vincolati a creator_process == None: durante la creazione del personaggio non è possibile eseguire altri comandi
     # prova a parsare il messaggio come lancio di dadi ed eseguirlo
@@ -375,7 +362,7 @@ async def on_message(msg):
         print("Creating character")
         comp_type = creator_process[author].expect(component_prompt)
         resp = creator_process[author].before
-        await chargen(msg, creator_process[author], author, comp_type, resp)
+        await chargen(msg, author, comp_type, resp)
     # generazione di nomi
     if ("!n" in content or "!nomi" in content) and author not in creator_process:
         # impostazioni di default
