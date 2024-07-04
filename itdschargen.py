@@ -772,6 +772,11 @@ abMestiere = { c: data["ceto"][c]["mestiere"] for c in data["ceto"] }
 abLibere = abMestiere | { c: data["caratteristiche"][c]["abilità"] for c in data["caratteristiche"] }
 # dizionario per la scelta delle armi
 armi = { t[1]: { arma: data["armi"][arma] for arma in data["armi"] if data["armi"][arma].tipo == t[0] } for t in [("P", "Punta"), ("T", "Taglio"), ("B", "Botta")] }
+# dizionario per l'acquisto degli oggetti
+oggetti = { cat: {
+        oggetto: data["oggetti"][oggetto] for oggetto in data["oggetti"] if data["oggetti"][oggetto].categoria == cat
+    } for cat in TipoOggetto
+}
 
 # Carica i dati esterni dai file YAML corrispondenti
 import yaml
@@ -1554,21 +1559,15 @@ def creazione(random=False):
 
     logg = []
 
-    for categoria in TipoOggetto:
-        oggetti = [ o for o in data["oggetti"] if data["oggetti"][o].categoria == categoria ]
-        if (categoria not in ["armi", "armature"]
-            and len(oggetti)
-            and sinput(f"acquistare oggetti dalla categoria {categoria}? ", ["sì", "no"]) == "sì"
-        ):
-            while True:
-                oggetto = sinput("oggetto", oggetti)
-                q = cinput("qualità", Qualità)
-                ogg = data["oggetti"][oggetto].qualità_oggetto(q)
-                if ogg.costo < p.denaro:
-                    p.denaro -= ogg.costo
-                    logg.append(ogg)
-                if ( sinput(f"acquistare altri oggetti ({categoria})? ", ["sì", "no"]) == "no" ):
-                    break
+    while p.denaro > 0:
+        oggetto = tinput("oggetto", oggetti)
+        q = cinput("qualità", Qualità)
+        ogg = data["oggetti"][oggetto].qualità_oggetto(q)
+        if ogg.costo < p.denaro:
+            p.denaro -= ogg.costo
+            logg.append(ogg)
+        if ( sinput("acquistare altri oggetti? ", ["sì", "no"]) == "no" ):
+            break
     p.equipaggiamento = logg
 
     # Personaggio completo
