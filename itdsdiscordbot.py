@@ -213,11 +213,9 @@ class MainMenu(Menu):
         self.dic = dic
 
     async def callback(self, interaction: discord.Interaction):
-        opts = []
         # Costruisce le opzioni per il nuovo select
-        for val in self.dic[self.values[0]]:
-            opts.append(discord.SelectOption(label=val))
-        # Rimuove tutti gli elementi della view a parte sé stesso
+        opts = [ discord.SelectOption(label=val) for val in self.dic[self.values[0]] ]
+        # Rimuove tutti gli elementi della view a parte sé stesso (i buttons)
         for child in self.view.children:
             if child is self:
                 continue
@@ -244,7 +242,7 @@ async def chargen(msg, author: str, comp_type: int, response: str):
         vw = ModalBtn(author, boxes)
         await msg.channel.send(response, view=vw)
 
-    if comp_type == 2:
+    if comp_type == 2: # Selezione multipla
         resp = response.split("\n")
         # Parsing della penultima riga di response dove è contenuto il numero di elementi da selezionare
         qta = re.findall(r"\d+", resp[-2])[0] #rqtc.findall(resp[-2])][0]
@@ -257,8 +255,8 @@ async def chargen(msg, author: str, comp_type: int, response: str):
         vw.add_item(Menu(opts, author, qta))
         await msg.channel.send(response, view=vw)
 
-    if comp_type == 3:
-        resp = response.split("\n")
+    if comp_type == 3: # Selezione ad albero
+        resp = str(response).split("\n")
         # Parsing JSON del dizionario creato in itdschargen
         sel_dict = json.loads(resp[-3])
         vw = discord.ui.View()

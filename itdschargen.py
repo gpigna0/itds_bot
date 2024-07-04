@@ -1539,7 +1539,7 @@ def creazione(random=False):
             break
     larmi = []
     while len(p.armi) < 5:
-        arma = tinput("arma", list(data["armi"].keys()))
+        arma = tinput("arma", armi)
         q = "buona" if "militare" in p.cultura else cinput("qualità", Qualità)
         arma_obj = data["armi"][arma].qualità_oggetto(q)
         if ("militare" in p.cultura and data["armi"][arma]["costo"] < p.denaro):  # applica il bonus della cultura militare
