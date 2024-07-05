@@ -109,7 +109,7 @@ import re
 
 rg = r"(?P<dice>\d+)d\s*(?P<drop>\d*)(\s*a(?P<skill>\d+)){0,1}(\s*(?P<bonus_sign>\+|\-)(?P<bonus_value>\d+)){0,1}(\s*vs\s*(?P<score>\d+)){0,1}"
 rgc = re.compile(rg, re.IGNORECASE)
-rb = r"(?:[a-zà-ùá-ú]+ ?)+[a-zà-ùá-ú]+"
+rb = r"(?: ?\([0-9]+\))? ?([0-9a-zà-ùá-ú ]+)"
 rbc = re.compile(rb, re.IGNORECASE)
 
 

@@ -1284,6 +1284,34 @@ def input_info_base(genere, min, max):
     return nome, luogo, anno
 
 
+def input_caratteristiche(pers, punti, min, max):
+    count = len(Caratteristiche) - 1
+    for c in Caratteristiche:
+        m = min
+        M = max + 1
+        r = None
+        while r is None:
+            span = [ str(i) for i in range(m, M) ]
+            print(f"{c.name} (punti residui={punti})")
+            r = input(f"{', '.join(span)}<button>")
+            try:
+                r = int(r)
+            except Exception:
+                r = None
+                continue
+            if count * 5 + r > punti:
+                M = r
+                r = None
+            elif r < min or r > max:
+                r = None
+            else:
+                count -= 1
+                punti -= r
+                pers.caratteristiche[c.name].caratteristica = r
+                pers.caratteristiche[c.name].modificatore = mod_base(r)
+            print("\n>>>\t")
+
+
 def input_mestiere(pers):
     global random_gen
     if random_gen:
@@ -1340,17 +1368,7 @@ def creazione(random=False):
 
     p = Personaggio(nome, luogo, anno, genere)
     punti_car = 54
-    count = 5  # contatore delle caratteristiche a cui assegnare punti, esclusa quella presente
-    for c in Caratteristiche:
-        while True:
-            car = iinput(f"{c.name} (punti residui={punti_car}) ", 5, 13)
-            if count * 5 + car > punti_car:
-                continue  # conta se rimangono abbastanza punti per allocare tutte le caratteristiche residue, in caso contrario ripete la richiesta
-            count -= 1
-            punti_car -= car
-            p.caratteristiche[c.name].caratteristica = car
-            p.caratteristiche[c.name].modificatore = mod_base(car)
-            break
+    input_caratteristiche(p, punti_car, 5, 13)
     # assegna grado 1 a tutte le abilità di base
     for a in p.abilità:
         for c in Caratteristiche:
