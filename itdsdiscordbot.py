@@ -140,9 +140,9 @@ import json
 
 
 # Modal che contiene le caselle di testo per i vari campi da inserire
-class TxtInput(discord.ui.Modal, title="Scrivi nelle caselle qui sotto"):
-    def __init__(self, author: str, boxes: list[str]):
-        super().__init__()
+class TxtInput(discord.ui.Modal):
+    def __init__(self, author: str, title: str, boxes: list[str]):
+        super().__init__(title=title)
         self.author = author
         for box in boxes:
             self.add_item(
@@ -158,13 +158,14 @@ class TxtInput(discord.ui.Modal, title="Scrivi nelle caselle qui sotto"):
 
 # Classe che genera il bottone per aprire il Modal con le caselle di testo
 class ModalBtn(discord.ui.View):
-    def __init__(self, author: str, boxes: list[str]):
+    def __init__(self, author: str, title: str, boxes: list[str]):
         super().__init__()
         self.author = author
+        self.title = title
         self.boxes = boxes
     @discord.ui.button(label="Inserisci", style=discord.ButtonStyle.blurple)
     async def spawn_modal(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_modal(TxtInput(self.author, self.boxes))
+        await interaction.response.send_modal(TxtInput(self.author, self.title, self.boxes))
 
 # Classe per gli input da bottone
 class Btn(discord.ui.Button):
@@ -238,8 +239,10 @@ async def chargen(msg, author: str, comp_type: int, response: str):
         await msg.channel.send(response, view=vw)
 
     if comp_type == 1:  # Text input
-        boxes = response.split("\n")[-1].replace(":", "").split(", ")
-        vw = ModalBtn(author, boxes)
+        resp= response.split("\n")
+        title = resp[-2]
+        boxes = resp[-1].replace(":", "").split(", ")
+        vw = ModalBtn(author, title, boxes)
         await msg.channel.send(response, view=vw)
 
     if comp_type == 2: # Selezione multipla

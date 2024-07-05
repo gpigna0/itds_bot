@@ -1185,9 +1185,8 @@ def iinput(nome, min_=None, max_=None):
         return randint(min_, max_)
     r = None
     while not r:
-        r = input(
-            f"{nome} ({min_ if min_ else 'N/A'}-{max_ if max_ else 'N/A'}):<txt_input>"
-        )
+        print(f"Inserire {nome}")
+        r = input(f"{nome} ({min_ if min_ else 'N/A'}-{max_ if max_ else 'N/A'}):<txt_input>")
         try:
             r = int(r)
             if min_ and r < min_:
@@ -1272,6 +1271,7 @@ def input_info_base(genere, min, max):
         luogo = None
         anno = None
         while anno is None or not nome or not luogo:
+            print("Inserisci le info del personaggio")
             r = input(f"Nome del personaggio, luogo di nascita, anno di nascita ({min}-{max}):<txt_input>")
             nome, luogo, anno = r.split(", ")
             try:
@@ -1289,6 +1289,7 @@ def input_mestiere(pers):
     if random_gen:
         return choice(list(professioni[pers.ceto].keys()))
     else:
+        print("Inserisci il mestiere del personaggio")
         mestiere = input("Mestiere:<txt_input>")
         print("\n>>>\t")
         return mestiere
@@ -1575,9 +1576,7 @@ def creazione(random=False):
 
 
 def aggiorna_personaggio(p):
-    p.pe_liberi += iinput(
-        "PE da aggiungere:", 0, 7
-    )  # 0 per consentire di spendere PE anche senza averne aggiunti; 7 è il massimo per sessione
+    p.pe_liberi += iinput("PE da aggiungere:", 0, 7)  # 0 per consentire di spendere PE anche senza averne aggiunti; 7 è il massimo per sessione
     if (
         p.pe_liberi >= 4
         and sinput(f"aumentare o acquisire abilità? ", ["sì", "no"]) == "sì"
