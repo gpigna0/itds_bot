@@ -1100,6 +1100,8 @@ def minput(nome, lis, qta):
         raise ITDSException(
             f"{nome} non può essere scelto, perché non ci sono opzioni disponibili"
         )
+    if qta > len(lis):
+        qta = len(lis)
     if random_gen:
         return sample(lis, qta)
     r = None

@@ -187,6 +187,10 @@ class Btn(discord.ui.Button):
 # Classi per gli input a selezione multipla
 class Menu(discord.ui.Select):
     def __init__(self, opts, auhtor, qta=1, qta_max=None, placeholder=None):
+        if len(opts) == 0:
+            opts = [ discord.SelectOption(label="Non ci sono elementi da selezionare") ]
+        if qta > len(opts):
+            qta = len(opts)
         if qta_max is None:
             qta_max = qta
         super().__init__(
@@ -248,12 +252,10 @@ async def chargen(msg, author: str, comp_type: int, response: str):
     if comp_type == 2: # Selezione multipla
         resp = response.split("\n")
         # Parsing della penultima riga di response dove è contenuto il numero di elementi da selezionare
-        qta = re.findall(r"\d+", resp[-2])[0] #rqtc.findall(resp[-2])][0]
+        qta = int(re.findall(r"\d+", resp[-2])[0])
         opts_str = resp[-1]
         opts_val = rbc.findall(opts_str)
-        opts = []
-        for o in opts_val:
-            opts.append(discord.SelectOption(label=o))
+        opts = [ discord.SelectOption(label=o) for o in opts_val ]
         vw = discord.ui.View()
         vw.add_item(Menu(opts, author, qta))
         await msg.channel.send(response, view=vw)
@@ -263,15 +265,12 @@ async def chargen(msg, author: str, comp_type: int, response: str):
         # Parsing JSON del dizionario creato in itdschargen
         sel_dict = json.loads(resp[-3])
         vw = discord.ui.View()
-        opts = []
-        for key in list(sel_dict.keys()):
-            opts.append(discord.SelectOption(label=key))
+        opts = [ discord.SelectOption(label=key) for key in list(sel_dict.keys()) ]
         vw.add_item(
             MainMenu(
                 opts,
                 author,
                 sel_dict,
-                1,
                 placeholder="Scegli una categoria da visualizzare",
             )
         )
