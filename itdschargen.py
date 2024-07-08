@@ -771,11 +771,11 @@ abMestiere = { c: data["ceto"][c]["mestiere"] for c in data["ceto"] }
 # dizionario per la scelta delle abilità libere
 abLibere = abMestiere | { c: data["caratteristiche"][c]["abilità"] for c in data["caratteristiche"] }
 # dizionario per la scelta delle armi
-armi = { t[1]: { arma: data["armi"][arma] for arma in data["armi"] if data["armi"][arma].tipo == t[0] } for t in [("P", "Punta"), ("T", "Taglio"), ("B", "Botta")] }
+armi = { t[1]: [ arma for arma in data["armi"] if data["armi"][arma].tipo == t[0] ] for t in [("P", "Punta"), ("T", "Taglio"), ("B", "Botta")] }
 # dizionario per l'acquisto degli oggetti
-oggetti = { cat: {
-        oggetto: data["oggetti"][oggetto] for oggetto in data["oggetti"] if data["oggetti"][oggetto].categoria == cat
-    } for cat in TipoOggetto
+oggetti = { cat: [
+        oggetto for oggetto in data["oggetti"] if data["oggetti"][oggetto].categoria == cat
+    ] for cat in TipoOggetto if cat not in ["armi", "armature"]
 }
 
 # Carica i dati esterni dai file YAML corrispondenti
