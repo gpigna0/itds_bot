@@ -1188,7 +1188,7 @@ def iinput(nome, min_=None, max_=None):
     r = None
     while not r:
         print(f"Inserire {nome}")
-        r = input(f"{nome} ({min_ if min_ else 'N/A'}-{max_ if max_ else 'N/A'}):<txt_input>")
+        r = input(f"{nome} ({min_ if min_ else 'N/A'}-{max_ if max_ else 'N/A'}):<txt_input>").strip()
         try:
             r = int(r)
             if min_ and r < min_:
@@ -1269,19 +1269,21 @@ def input_info_base(genere, min, max):
         )
         anno = randint(min, max)
     else:
-        nome = None
-        luogo = None
-        anno = None
-        while anno is None or not nome or not luogo:
+        r = None
+        while r is None:
             print("Inserisci le info del personaggio")
             r = input(f"Nome del personaggio, luogo di nascita, anno di nascita ({min}-{max}):<txt_input>")
-            nome, luogo, anno = r.split(", ")
+            r = [ s.strip() for s in r.split(", ") ]
+            if len(r) != 3:
+                r = None
+                continue
+            nome, luogo, anno = r
             try:
                 anno = int(anno)
                 if anno < min or anno > max:
-                    anno = None
+                    r = None
             except Exception:
-                anno = None
+                r = None
             print("\n>>>\t")
     return nome, luogo, anno
 
@@ -1320,7 +1322,7 @@ def input_mestiere(pers):
         return choice(list(professioni[pers.ceto].keys()))
     else:
         print("Inserisci il mestiere del personaggio")
-        mestiere = input("Mestiere:<txt_input>")
+        mestiere = input("Mestiere:<txt_input>").strip()
         print("\n>>>\t")
         return mestiere
 
