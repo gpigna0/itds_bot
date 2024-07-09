@@ -292,7 +292,7 @@ intents.message_content = True  # Il bot deve poter leggere almeno i messaggi
 creator_process = {}  # Se è attivo il programma di creazione dei personaggi, va salvato l'oggetto corrispondente qui, con lo username dell'autore come chiave; questo consente di creare più personaggi contemporaneamente
 # il prompt atteso dal programma di creazione dei personaggi, indica che la stampa del messaggio è pronta
 prompt = ["\n>>>\t", pexpect.EOF]
-component_prompt = ["<button>", "<txt_input>", "<choice>", "<tree-select>"]
+component_prompt = ["<button>", "<txt_input>", "<choice>", "<tree-select>", pexpect.EOF]
 
 
 # gestione degli eventi webcor
@@ -329,8 +329,14 @@ async def on_message(msg):
             creator_process[author].expect(prompt)
         comp_type = creator_process[author].expect(component_prompt)
         resp = creator_process[author].before
-        # WARN: pexpect.EOF ancora da gestire
-        await chargen(msg, author, comp_type, resp)
+        if comp_type == 4: # EOF: la creazione del personaggio è terminata
+            nome = resp.strip() # estrae il nome del personaggio dall'output del programma
+            creator_process[author] = pexpect.spawnu(f'./pdffields.py json/{re.escape(nome)}.json') # chiama il convertitore a PDF
+            creator_process[author].expect(pexpect.EOF) # attende il completamento della conversione
+            await msg.channel.send(f"**{author}** ha creato {nome}", file=discord.File(f'./pdf/{nome}.pdf')) # invia il file PDF sulla chat
+            del creator_process[author] # rimuove il creator_process, riabilitando gli altri comandi
+        else:
+            await chargen(msg, author, comp_type, resp)
         return
     # tutti i comandi successivi sono vincolati a creator_process == None: durante la creazione del personaggio non è possibile eseguire altri comandi
     # prova a parsare il messaggio come lancio di dadi ed eseguirlo

@@ -1652,5 +1652,5 @@ if __name__ == "__main__":
                 fout.write(tojson(c))
         except ITDSException as e:
             print(e)
-    print(c)
+    # print(c)
     print(c.nome)
