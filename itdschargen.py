@@ -1147,18 +1147,19 @@ def ainput(nome, dic, pers=None, remaining=1):
         except Exception as e:
             print("Tentativo di scegliere una abilità professionale fallito", e)
             pass
-    else:
-        return tinput(nome, dic)
+    return tinput(nome, dic)
 
 
 def tinput(nome, dic):
-    # INFO: Il dizionario viene convertito in una stringa con json.dumps()
-    #       per essere utilizzato per la creazione dei component in itdsdiscordbot,
-    #       ma viene anche convertito in lista per renderlo compatibile
-    #       con l'input da messaggio dell'utente
-    #       La gestione dell'input rimane molto simile a sinput()
-    dic_str = json.dumps(dic)
+    """Input che permette di aggirare le limitazioni imposte dalle API di Discord sul numero di componenti che si possono inserire in una view.
+    Per fare ciò a partire da un dizionario vengono creati due menù a tendina che possono contenere fino a 25 elementi ciascuno:
+    il primo conterrà le chiavi del dizionario, mentre il secondo viene aggiornato dinamicamente per
+    contenere gli elementi della lista associata alla chiave selezionata"""
     lis = sum([dic[c] for c in dic.keys()], [])
+    global random_gen
+    if random_gen:
+        return choice(lis)
+    dic_str = json.dumps(dic)
     r = None
     s = [f"({lis.index(l)+1}) {l}" for l in lis]
     while not r:
@@ -1263,10 +1264,7 @@ def input_info_base(genere, min, max):
         from namegen import get_name
 
         luogo = choice(list(lingue_per_regione.keys()))
-        nome = get_name(
-            gender="male" if genere == "maschio" else "female",
-            language=lingue_per_regione[luogo],
-        )
+        nome = get_name(gender="male" if genere == "maschio" else "female", language=lingue_per_regione[luogo])
         anno = randint(min, max)
     else:
         r = None
@@ -1289,31 +1287,40 @@ def input_info_base(genere, min, max):
 
 
 def input_caratteristiche(pers, punti, min, max):
+    global random_gen
     count = len(Caratteristiche) - 1
     for c in Caratteristiche:
-        m = min
-        M = max + 1
-        r = None
-        while r is None:
-            span = [ str(i) for i in range(m, M) ]
-            print(f"{c.name} (punti residui={punti})")
-            r = input(f"{', '.join(span)}<button>")
-            try:
-                r = int(r)
-            except Exception:
-                r = None
-                continue
-            if count * 5 + r > punti:
-                M = r
-                r = None
-            elif r < min or r > max:
-                r = None
-            else:
-                count -= 1
-                punti -= r
-                pers.caratteristiche[c.name].caratteristica = r
-                pers.caratteristiche[c.name].modificatore = mod_base(r)
-            print("\n>>>\t")
+        if random_gen:
+            while True:
+                pts = randint(min, max)
+                if count * 5 + pts <= punti:
+                    pers.caratteristiche[c.name].caratteristica = pts
+                    pers.caratteristiche[c.name].modificatore = mod_base(pts)
+                    break
+        else:
+            m = min
+            M = max + 1
+            r = None
+            while r is None:
+                span = [ str(i) for i in range(m, M) ]
+                print(f"{c.name} (punti residui={punti})")
+                r = input(f"{', '.join(span)}<button>")
+                try:
+                    r = int(r)
+                except Exception:
+                    r = None
+                    continue
+                if count * 5 + r > punti:
+                    M = r
+                    r = None
+                elif r < min or r > max:
+                    r = None
+                else:
+                    count -= 1
+                    punti -= r
+                    pers.caratteristiche[c.name].caratteristica = r
+                    pers.caratteristiche[c.name].modificatore = mod_base(r)
+                print("\n>>>\t")
 
 
 def input_mestiere(pers):
