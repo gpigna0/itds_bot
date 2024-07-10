@@ -209,10 +209,12 @@ class Menu(discord.ui.Select):
         )
 
 
-# INFO: MainMenu permette di selezionare quale set di opzioni visualizzare
-# basandosi sulle chiavi del dizionario passato al costruttore
-# Eventualmente è possibile espandere fino a quattro la quantità di set da visualizzare
 class MainMenu(Menu):
+    """Un Menu che permette di selezionare quale set di opzioni è da visualizzare
+       in un secondo Menu, basandosi sui contenuti del dizionario passato al costruttore.
+       Ogni volta che viene selezionata un'opzione in MainMenu, il "sottomenu" viene rimosso per poi inserirne
+       uno nuovo con il set di opzioni aggiornato.
+       Eventualmente è possibile espandere fino a quattro la quantità di set da visualizzare"""
     def __init__(self, opts, author, dic, qta=1, qta_max=None, placeholder=None):
         super().__init__(opts, author, qta, qta_max, placeholder)
         self.dic = dic
@@ -223,6 +225,7 @@ class MainMenu(Menu):
         # Rimuove tutti gli elementi della view a parte sé stesso (i buttons)
         for child in self.view.children:
             if child is self:
+                self.placeholder = f"Categoria selezionata: {self.values[0]}"
                 continue
             self.view.remove_item(child)
         # Aggiorna la view inserendo il nuovo menu
