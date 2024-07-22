@@ -40,9 +40,9 @@ class Oggetto(YAMLWizard):
     try : Qualità(q) #ignora valori scorretti, considerandoli come normale
     except ValueError: return o
     o['qualità']=q
-    if q=='buona' : 
+    if q=='buona' :
       o.costo*=3
-    if q=='scadente' : 
+    if q=='scadente' :
       o.costo/=2
     elif q=='eccellente' : 
       if o.conio == 'denari' :
@@ -50,11 +50,11 @@ class Oggetto(YAMLWizard):
         o.costo*=12
       else :
         o.costo*=5
-    elif q=='ottima' : 
+    elif q=='ottima' :
       if o.conio == 'lire' :
-        o.costo*=10        
+        o.costo*=10
       else :
-        if o.conio=='soldi': 
+        if o.conio=='soldi':
           o.costo*=20
         else :
           o.costo*=240

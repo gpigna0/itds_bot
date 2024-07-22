@@ -154,7 +154,7 @@ class TxtInput(discord.ui.Modal):
 
     async def on_submit(self, interaction: discord.Interaction):
         msg = ", ".join([c.value for c in self.children])
-        await interaction.response.send_message(f"{self.author} ha scelto: {msg}")
+        await interaction.response.send_message(f"**{self.author}** ha scelto: {msg}")
 
 # Classe che genera il bottone per aprire il Modal con le caselle di testo
 class ModalBtn(discord.ui.View):
@@ -180,7 +180,7 @@ class Btn(discord.ui.Button):
         await interaction.response.edit_message(view=self.view)
         # Invia il messaggio con le scelte effettuate
         await interaction.followup.send(
-            content=f"{self.author} ha scelto: {self.label}"
+            content=f"**{self.author}** ha scelto: {self.label}"
         )
 
 
@@ -193,9 +193,7 @@ class Menu(discord.ui.Select):
             qta = len(opts)
         if qta_max is None:
             qta_max = qta
-        super().__init__(
-            min_values=qta, max_values=qta_max, options=opts, placeholder=placeholder
-        )
+        super().__init__(min_values=qta, max_values=qta_max, options=opts, placeholder=placeholder)
         self.author = auhtor
 
     async def callback(self, interaction: discord.Interaction):
@@ -204,9 +202,7 @@ class Menu(discord.ui.Select):
         # Aggiorna la view disabilitando i components
         await interaction.response.edit_message(view=self.view)
         # Invia il messaggio con le scelte effettuate
-        await interaction.followup.send(
-            content=f"{self.author} ha scelto: {', '.join(self.values)}"
-        )
+        await interaction.followup.send(content=f"**{self.author}** ha scelto: {', '.join(self.values)}")
 
 
 class MainMenu(Menu):
@@ -294,8 +290,11 @@ intents.message_content = True  # Il bot deve poter leggere almeno i messaggi
 # setup delle variabili globali del bot
 creator_process = {}  # Se è attivo il programma di creazione dei personaggi, va salvato l'oggetto corrispondente qui, con lo username dell'autore come chiave; questo consente di creare più personaggi contemporaneamente
 # il prompt atteso dal programma di creazione dei personaggi, indica che la stampa del messaggio è pronta
-prompt = ["\n>>>\t", pexpect.EOF]
-component_prompt = ["<button>", "<txt_input>", "<choice>", "<tree-select>", pexpect.EOF]
+prompt = ["\n>>>\t"]
+# il prompt che indica qual è la prossima azione che il bot deve eseguire
+action_prompt = ["<button>", "<txt_input>", "<choice>", "<tree-select>", "Operazione completata", pexpect.EOF]
+# prompt ricevuti nel caso di creazione casuale
+random_prompt = ["Operazione completata", pexpect.EOF]
 
 
 # gestione degli eventi webcor
@@ -330,16 +329,21 @@ async def on_message(msg):
         if not isbot:
             creator_process[author].sendline(content)
             creator_process[author].expect(prompt)
-        comp_type = creator_process[author].expect(component_prompt)
-        resp = creator_process[author].before
-        if comp_type == 4: # EOF: la creazione del personaggio è terminata
-            nome = resp.strip() # estrae il nome del personaggio dall'output del programma
-            creator_process[author] = pexpect.spawnu(f'./pdffields.py json/{re.escape(nome)}.json') # chiama il convertitore a PDF
+        comp_type = creator_process[author].expect(action_prompt)
+        response = creator_process[author].before
+        if comp_type == 4: # Creazione del personaggio terminata
+            nome = response.split("\n")[-2].strip() # estrae il nome del personaggio dall'output del programma
+            creator_process[author] = pexpect.spawnu(f'./pdffields.py {nome}') # chiama il convertitore a PDF
             creator_process[author].expect(pexpect.EOF) # attende il completamento della conversione
             await msg.channel.send(f"**{author}** ha creato {nome}", file=discord.File(f'./pdf/{nome}.pdf')) # invia il file PDF sulla chat
             del creator_process[author] # rimuove il creator_process, riabilitando gli altri comandi
+        elif comp_type == 5: # EOF: si è verificato un errore
+            await msg.channel.send(f"""
+## Si è verificato un errore: *{response.strip()}*
+Riavvia il bot""")
+            del creator_process[author]
         else:
-            await chargen(msg, author, comp_type, resp)
+            await chargen(msg, author, comp_type, response)
         return
     # tutti i comandi successivi sono vincolati a creator_process == None: durante la creazione del personaggio non è possibile eseguire altri comandi
     # prova a parsare il messaggio come lancio di dadi ed eseguirlo
@@ -350,28 +354,34 @@ async def on_message(msg):
     if "!itdsrand" in content and author not in creator_process:
         # attiva il programma di creazione dei personaggi
         creator_process[author] = pexpect.spawnu("./itdschargen.py r")
-        creator_process[author].expect(pexpect.EOF)
+        status = creator_process[author].expect(random_prompt)
         response = creator_process[author].before
-        nome = response.split("\n")[-2].strip()
-        print(f"randomly created {re.escape(nome)}")
-        creator_process[author] = pexpect.spawnu(
-            f"./pdffields.py json/{re.escape(nome)}.json"
-        )
-        creator_process[author].expect(pexpect.EOF)
-        await msg.channel.send(
-            f"**{author}** ha creato {nome}", file=discord.File(f"./pdf/{nome}.pdf")
-        )
+        if status == 0: # La creazione del personaggio è terminata con successo
+            print(response)
+            nome = response.split("\n")[-2].strip() # estrae il nome del personaggio dall'output del programma
+            print(f"randomly created {re.escape(nome)}")
+            creator_process[author] = pexpect.spawnu(f"./pdffields.py {re.escape(nome)}")
+            creator_process[author].expect(pexpect.EOF)
+            await msg.channel.send(f"**{author}** ha creato {nome}", file=discord.File(f"./pdf/{nome}.pdf"))
+        else: # Si è verificato un errore
+            await msg.channel.send(f"""
+## Si è verificato un errore: *{response.strip()}*
+Riavvia il bot""")
         del creator_process[author]  # rimuove il creator_process
     # creazione guidata di un personaggio, inizializzazione
     if "!itdsc" in content and author not in creator_process:
         # attiva il programma di creazione dei personaggi
-        creator_process[author] = pexpect.spawnu(["./itdschargen.py"])
-        # creator_process[author].expect(prompt)
-        # response = creator_process[author].before
+        creator_process[author] = pexpect.spawnu("./itdschargen.py")
         print("Creating character")
-        comp_type = creator_process[author].expect(component_prompt)
-        resp = creator_process[author].before
-        await chargen(msg, author, comp_type, resp)
+        comp_type = creator_process[author].expect(action_prompt)
+        response = creator_process[author].before
+        if comp_type != 5: # Se la connessione a Redis non avviene, itdschargen termina subito
+            await chargen(msg, author, comp_type, response)
+        else:
+            await msg.channel.send(f"""
+## Si è verificato un errore: *{response.strip()}*
+Riavvia il bot""")
+            del creator_process[author]
     # generazione di nomi
     if ("!n" in content or "!nomi" in content) and author not in creator_process:
         # impostazioni di default

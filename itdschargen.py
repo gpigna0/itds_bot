@@ -6,6 +6,7 @@ __doc__ = """Generazione guidata o casuale di personaggi de Il Tempo della Spada
 
 from typing import List
 import json
+import redis
 from dataclasses_json import dataclass_json
 from dataclasses import dataclass, field
 from enum import Enum
@@ -1630,36 +1631,50 @@ def aggiorna_personaggio(p):
     talenti.verifica_talenti(p)
 
 
-# JSON
-def tojson(p):
-    return p.to_json()
+# GESTIONE PERSONAGGIO
+db = redis.Redis(username="ITDSBOT", password="itds", decode_responses=True)
 
 
-def fromjson(fname):
-    with open(fname, "r") as fin:
-        return Personaggio.from_json(fin.read())
+class CharacterNotFound(KeyError):
+    """Permette di segnalare che non è stata trovata nessuna chiave corrispondente al personaggio cercato"""
+    pass
 
+def loadp(name):
+    jsonp = db.get(f"itds:{name}")
+    if jsonp is None:
+        raise CharacterNotFound(f"Non è stato trovato alcun personaggio chiamato {name}")
+    return Personaggio.from_json(jsonp)
+
+
+def savep(p):
+    db.set(f"itds:{p.nome}", p.to_json())
+
+from redis import exceptions as RExceptions
 
 if __name__ == "__main__":
-    from sys import argv
-    from os.path import exists
+    from sys import argv, exit
 
+    try:
+        db.ping()
+    except RExceptions.ConnectionError as e:
+        exit(str(e))
     random = False
     c = None
     for a in argv[1:]:
         if a in ["random", "rand", "r"]:
             random = True
-        elif exists(a):
-            c = fromjson(a)
+            break
+        try:
+            c = loadp(a)
             aggiorna_personaggio(c)
-            with open("./json/" + c.nome + ".json", "w") as fout:
-                fout.write(tojson(c))
+            savep(c)
+        except CharacterNotFound as e:
+            print(e)
     while not c:
         try:
             c = creazione(random=random)
-            with open("./json/" + c.nome + ".json", "w") as fout:
-                fout.write(tojson(c))
+            savep(c)
         except ITDSException as e:
             print(e)
-    # print(c)
     print(c.nome)
+    print("Operazione completata")

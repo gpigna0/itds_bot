@@ -146,16 +146,12 @@ def fill(p):
     i+=1
 
   return fields
-  #p.luogo_nascita 
-  #p.retaggio   
 
 
 def write_pdf(p):
   reader = PdfReader("scheda_template.pdf")
   writer = PdfWriter()
   writer.clone_reader_document_root(reader)
-  #for page in reader.pages: 
-  #  writer.add_page(page)
   fields = fill(p)
   print(fields)
   writer.update_page_form_field_values(writer.pages[0], fields)
@@ -163,20 +159,21 @@ def write_pdf(p):
   with open(f"./pdf/{p.nome}.pdf", "wb") as output_stream:
     writer.write(output_stream)
 
-from itdschargen import fromjson, Personaggio
+from redis import exceptions as RExceptions
+from itdschargen import CharacterNotFound, loadp
 import dataclasses
 
 if __name__=='__main__':
-  from sys import argv
-  from os.path import exists
+  from sys import argv, exit
   random=False
   for a in argv[1:]:
-    if exists(a) : 
-      c = fromjson(a) #TODO sembra che fromjson perda le armi (lista di dataclass)
-      for field in dataclasses.fields(c):
-        field_name = field.name
-        field_value = getattr(c, field_name)
-        print(f"{field_name}: {field_value}")
-      print("-----------------------------------------------------------------")
-      write_pdf(c)
-      
+    try:
+      c = loadp(a) #TODO sembra che fromjson perda le armi (lista di dataclass)
+    except (CharacterNotFound, RExceptions.ConnectionError) as e:
+      exit(str(e))
+    for field in dataclasses.fields(c):
+      field_name = field.name
+      field_value = getattr(c, field_name)
+      print(f"{field_name}: {field_value}")
+    print("-----------------------------------------------------------------")
+    write_pdf(c)
