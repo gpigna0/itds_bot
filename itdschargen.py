@@ -1632,7 +1632,8 @@ def aggiorna_personaggio(p):
 
 
 # GESTIONE PERSONAGGIO
-db = redis.Redis(username="ITDSBOT", password="itds", decode_responses=True)
+from config import DB_ADDRESS, DB_PORT
+db = redis.Redis(host=DB_ADDRESS, port=DB_PORT, username="ITDSBOT", password="itds", decode_responses=True)
 
 
 class CharacterNotFound(KeyError):

@@ -8,6 +8,7 @@ Gli script contenuti in questa cartella implementano quattro funzionalità utili
 
 ### Installazione
 L'installazione non è, purtroppo, del tutto elementare.
+Innanzitutto è necessario avere installato [Redis](https://redis.io/docs/latest/operate/oss_and_stack/install/install-redis/), disponibile sia per Linux che per MacOS. Per Windows, invece, sarà necessario installare il database tramite **WSL**. In questo caso è possibile utilizzare il bot direttamente dalla macchina virtuale seguendo le istruzioni per Linux.  
 In un ambiente Linux con Python 3.10, dovrebbe essere sufficiente eseguire lo script `install.sh`.
 Con un po' di fortuna, le stesse cose potrebbero funzionare anche su altri sistemi operativi compatibili con lo standard POSIX.
 
@@ -35,6 +36,7 @@ Con un po' di fortuna, le stesse cose potrebbero funzionare anche su altri siste
  viene utilizzato un form che permette di inserire con un'unica interazione tutte le info necessarie. Rimane comunque compatibile
  la selezione delle scelte tramite messaggio semplice, con la differenza che nel caso di scelte multiple le le opzioni
  selezionate vanno separate con `, ` (virgola spazio)
+ - Salvataggio dei personaggi persistente tramite Redis. Alcuni dati usati per la connessione al database sono definiti in `config.py`, pertanto è consigliabile cancellare e rigenerare il file tramite `install.sh` o aggiornarlo con i dati necessari.
 ### TODO
 Idee per estensioni, divise per argomento.
 
@@ -53,7 +55,7 @@ Funzionalità necessarie per consentire l'hosting del bot ed il suo corretto fun
  - Verificare il corretto funzionamento della creazione contemporanea da più giocatori/magistri.
  - Generare la scheda in un formato diverso se `pypdf` non funziona (banalmente in formato testuale?), eseguendo la verifica in modo automatico (tentando di creare un PG casuale subito dopo l'installazione).
  - Sanitizzare l'input dal bot, in particolare le stringhe di testo libero.
- - Non memorizzare permanentemente i pdf, e impiegare una memorizzazione persistente diversa dai file (Redis?). Consentire agli utenti di scaricare la scheda in json in modo da limitare la necessità di mantenere i file (per limitare lo spazio impiegato dal bot). In alternativa, si potrebbero ricaricare i personaggi dal PDF (più complicato, ma credo fattibile).
+ - Non memorizzare permanentemente i pdf. Consentire agli utenti di scaricare la scheda in json in modo da limitare la necessità di mantenere i file (per limitare lo spazio impiegato dal bot). In alternativa, si potrebbero ricaricare i personaggi dal PDF (più complicato, ma credo fattibile).
 
 #### Portabilità e facilità di installazione
 Modifiche per semplificare l'installazione
