@@ -156,19 +156,42 @@ def write_pdf(p):
   print(fields)
   writer.update_page_form_field_values(writer.pages[0], fields)
   writer.update_page_form_field_values(writer.pages[1], fields)
+  writer.add_metadata({"/CharData": p.to_json()}) # Aggiunge un campo nei metadati contenente il Personaggio in formato json facilitando le operazioni di import/export
   with open(f"./pdf/{p.nome}.pdf", "wb") as output_stream:
     writer.write(output_stream)
 
+
+def import_from_pdf(path): # path o nome?
+    reader = PdfReader(path)
+    jsonp = reader.metadata["/CharData"]
+    p = Personaggio.from_json(jsonp)
+    savepers(p)
+
+
+def import_from_txt(path):
+    pass
+
+
 from redis import exceptions as RExceptions
-from itdschargen import CharacterNotFound, loadp
+from itdschargen import CharacterNotFound, Personaggio, loadpers, savepers
 import dataclasses
 
+# TODO: Adattare il codice per creare schede non-pdf nel caso di problemi con pypdf
+#       La difficoltà è scegliere come importare il peronaggio da non-pdf: Stringa in coda alla scheda dopo identificatore? doppio file txt/json?
 if __name__=='__main__':
-  from sys import argv, exit
+  from sys import exit
+  import argparse
+  parser = argparse.ArgumentParser(
+    prog="Pdffields",
+    description="Genera schede personaggio o importa un personaggio da una scheda esistente"
+  )
+  parser.add_argument("--importa","-i",metavar="PATH",type=str,help="Salva sul database il personaggio contenuto nella scheda")
+  parser.add_argument("--esporta","-e",metavar="NOME",type=str,help="Genera la scheda del personaggio chiamato NOME")
   random=False
-  for a in argv[1:]:
+  a = parser.parse_args()
+  if a.esporta is not None:
     try:
-      c = loadp(a) #TODO sembra che fromjson perda le armi (lista di dataclass)
+      c = loadpers(a.esporta) #TODO sembra che fromjson perda le armi (lista di dataclass)
     except (CharacterNotFound, RExceptions.ConnectionError) as e:
       exit(str(e))
     for field in dataclasses.fields(c):
@@ -177,3 +200,9 @@ if __name__=='__main__':
       print(f"{field_name}: {field_value}")
     print("-----------------------------------------------------------------")
     write_pdf(c)
+  elif a.importa is not None:
+    try:
+      import_from_pdf(a.importa)
+    except (KeyError, RExceptions.ConnectionError) as e:
+      exit(str(e))
+  print("\n>>>\t")

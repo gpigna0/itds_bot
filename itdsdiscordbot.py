@@ -277,8 +277,8 @@ async def chargen(msg, author: str, comp_type: int, response: str):
 
 
 # Il resto dell'applicazione è più o meno adattata da bot.py
+from os import remove
 import pexpect
-from itdschargen import creazione
 import namegen
 
 # setup di discord
@@ -288,9 +288,11 @@ client = discord.Client(intents=intents)
 intents.message_content = True  # Il bot deve poter leggere almeno i messaggi
 
 # setup delle variabili globali del bot
-creator_process = {}  # Se è attivo il programma di creazione dei personaggi, va salvato l'oggetto corrispondente qui, con lo username dell'autore come chiave; questo consente di creare più personaggi contemporaneamente
+pexpect_process = {}  # Se è attiva una shell aperta da pexpect, va salvato l'oggetto corrispondente qui, con lo username dell'autore come chiave; questo consente di eseguire comandi che sfruttano pexpect in contemporanea da parte di utenti diversi
+# il prompt di base per le azioni diverse dalla creazione di personaggi: in questi casi \n>>>\t indica la corretta esecuzione
+prompt = ["\n>>>\t", pexpect.EOF]
 # il prompt atteso dal programma di creazione dei personaggi, indica che la stampa del messaggio è pronta
-prompt = ["\n>>>\t"]
+creator_prompt = ["\n>>>\t"]
 # il prompt che indica qual è la prossima azione che il bot deve eseguire
 action_prompt = ["<button>", "<txt_input>", "<choice>", "<tree-select>", "Operazione completata", pexpect.EOF]
 # prompt ricevuti nel caso di creazione casuale
@@ -308,82 +310,133 @@ async def on_ready():
 @client.event
 async def on_message(msg):
     """Evento principale, gestisce tutti i messaggi"""
-    global creator_process
+    global pexpect_process
     author = str(msg.author).split("#")[0]  # estrae il nome dell'autore del messaggio
     content = msg.content
     isbot = False  # serve nel processo di creazione per decidere come parsare content
     if msg.author == client.user:
         isbot = True
-        if content.split(" ")[0] not in creator_process:
+        if content.split(" ")[0] not in pexpect_process:
             return  # ignora i propri messaggi
         else:
             content = content.split(" ")
             author = content[0]
     # creazione di un personaggio già iniziata
-    if author in creator_process:
+    if author in pexpect_process and pexpect_process[author].name == "<./itdschargen.py -c>": # questo blocco è da eseguire solo per la creazione manuale
         if isbot and len(content) > 1:
             # la gestione di scelte multiple è gestita dal itdschargen
-            creator_process[author].sendline(" ".join(content[3:]))
-            creator_process[author].expect(prompt)
+            pexpect_process[author].sendline(" ".join(content[3:]))
+            pexpect_process[author].expect(creator_prompt)
         # gli input da parte dell'utente vengono riconosciuti separatamente
         if not isbot:
-            creator_process[author].sendline(content)
-            creator_process[author].expect(prompt)
-        comp_type = creator_process[author].expect(action_prompt)
-        response = creator_process[author].before
+            pexpect_process[author].sendline(content)
+            pexpect_process[author].expect(creator_prompt)
+        comp_type = pexpect_process[author].expect(action_prompt)
+        response = pexpect_process[author].before
         if comp_type == 4: # Creazione del personaggio terminata
             nome = response.split("\n")[-2].strip() # estrae il nome del personaggio dall'output del programma
-            creator_process[author] = pexpect.spawnu(f'./pdffields.py {nome}') # chiama il convertitore a PDF
-            creator_process[author].expect(pexpect.EOF) # attende il completamento della conversione
+            pexpect_process[author] = pexpect.spawnu(f"./pdffields.py -e '{nome}'") # chiama il convertitore a PDF
+            pexpect_process[author].expect(pexpect.EOF) # attende il completamento della conversione
             await msg.channel.send(f"**{author}** ha creato {nome}", file=discord.File(f'./pdf/{nome}.pdf')) # invia il file PDF sulla chat
-            del creator_process[author] # rimuove il creator_process, riabilitando gli altri comandi
+            remove(f"./pdf/{nome}.pdf")
+            del pexpect_process[author] # rimuove il creator_process, riabilitando gli altri comandi
         elif comp_type == 5: # EOF: si è verificato un errore
-            await msg.channel.send(f"""
-## Si è verificato un errore: *{response.strip()}*
-Riavvia il bot""")
-            del creator_process[author]
+            await msg.channel.send(f"### Si è verificato un errore: *{response.strip()}*")
+            del pexpect_process[author]
         else:
             await chargen(msg, author, comp_type, response)
         return
     # tutti i comandi successivi sono vincolati a creator_process == None: durante la creazione del personaggio non è possibile eseguire altri comandi
     # prova a parsare il messaggio come lancio di dadi ed eseguirlo
     res = parse_and_roll(content)
-    if res and author not in creator_process:
+    if res and author not in pexpect_process:
         await msg.channel.send(f"**{author}**" + res)
     # creazione di un personaggio casuale; questo comando è autocontenuto, quindi creator_process viene creato e poi distrutto
-    if "!itdsrand" in content and author not in creator_process:
+    if "!itdsr" in content and author not in pexpect_process:
         # attiva il programma di creazione dei personaggi
-        creator_process[author] = pexpect.spawnu("./itdschargen.py r")
-        status = creator_process[author].expect(random_prompt)
-        response = creator_process[author].before
+        pexpect_process[author] = pexpect.spawnu("./itdschargen.py -c r")
+        status = pexpect_process[author].expect(random_prompt)
+        response = pexpect_process[author].before
         if status == 0: # La creazione del personaggio è terminata con successo
             print(response)
             nome = response.split("\n")[-2].strip() # estrae il nome del personaggio dall'output del programma
-            print(f"randomly created {re.escape(nome)}")
-            creator_process[author] = pexpect.spawnu(f"./pdffields.py {re.escape(nome)}")
-            creator_process[author].expect(pexpect.EOF)
+            print(f"randomly created {nome}")
+            pexpect_process[author] = pexpect.spawnu(f"./pdffields.py -e '{nome}'")
+            status = pexpect_process[author].expect(prompt)
             await msg.channel.send(f"**{author}** ha creato {nome}", file=discord.File(f"./pdf/{nome}.pdf"))
-        else: # Si è verificato un errore
-            await msg.channel.send(f"""
-## Si è verificato un errore: *{response.strip()}*
-Riavvia il bot""")
-        del creator_process[author]  # rimuove il creator_process
+            remove(f"./pdf/{nome}.pdf")
+        # Si è verificato un errore
+        await msg.channel.send(f"### Si è verificato un errore: *{response.strip()}*")
+        del pexpect_process[author]  # rimuove il creator_process
     # creazione guidata di un personaggio, inizializzazione
-    if "!itdsc" in content and author not in creator_process:
+    if "!itdsc" in content and author not in pexpect_process:
         # attiva il programma di creazione dei personaggi
-        creator_process[author] = pexpect.spawnu("./itdschargen.py")
+        pexpect_process[author] = pexpect.spawnu("./itdschargen.py -c")
         print("Creating character")
-        comp_type = creator_process[author].expect(action_prompt)
-        response = creator_process[author].before
+        comp_type = pexpect_process[author].expect(action_prompt)
+        response = pexpect_process[author].before
         if comp_type != 5: # Se la connessione a Redis non avviene, itdschargen termina subito
             await chargen(msg, author, comp_type, response)
         else:
-            await msg.channel.send(f"""
-## Si è verificato un errore: *{response.strip()}*
-Riavvia il bot""")
-            del creator_process[author]
+            await msg.channel.send(f"### Si è verificato un errore: *{response.strip()}*")
+            del pexpect_process[author]
+    # visualizzazione dei nomi di tutti i personaggi salvati
+    if "!itdss" in content and author not in pexpect_process:
+        pexpect_process[author] = pexpect.spawnu("./itdschargen.py -s")
+        err = pexpect_process[author].expect(prompt)
+        response = pexpect_process[author].before
+        if err == 0: # Non si sono verificati errori
+            await msg.channel.send(response)
+        else:
+            await msg.channel.send(f"### Si è verificato un errore: *{response.strip()}*")
+        del pexpect_process[author]
+    # cancellazione di un personaggio
+    if "!itdsd" in content and author not in pexpect_process:
+        nome = " ".join(content.split()[1:])
+        if nome == '':
+            await msg.channel.send("Non è stato fornito alcun nome")
+        else:
+            pexpect_process[author] = pexpect.spawnu(f"./itdschargen.py -d '{nome}'")
+            err = pexpect_process[author].expect(prompt)
+            response = pexpect_process[author].before
+            if err == 0: # Non si sono verificati errori
+                await msg.channel.send(f"### {nome} rimosso dalla memoria")
+            else:
+                await msg.channel.send(f"### Si è verificato un errore: *{response.strip()}*")
+            del pexpect_process[author]
+    # generazione della scheda personaggio
+    if "!itdse" in content and author not in pexpect_process:
+        nome = " ".join(content.split()[1:])
+        if nome == '':
+            await msg.channel.send("Non è stato fornito alcun nome")
+        else:
+            pexpect_process[author] = pexpect.spawnu(f"./pdffields.py -e '{nome}'")
+            err = pexpect_process[author].expect(prompt)
+            response = pexpect_process[author].before
+            if err == 0: # Non si sono verificati errori
+                await msg.channel.send(f"### Scheda di {nome}", file=discord.File(f"./pdf/{nome}.pdf"))
+                remove(f"./pdf/{nome}.pdf") # cancella la copia locale del file generato
+            else:
+                await msg.channel.send(f"### Si è verificato un errore: *{response.strip()}*")
+            del pexpect_process[author]
+    # importazione del personaggio da file
+    if "!itdsi" in content and author not in pexpect_process:
+        if len(msg.attachments) > 0: # considera solo il primo attachment se esiste
+            allegato = msg.attachments[0]
+        else:
+            await msg.channel.send("File non trovato. Assicurati di averlo inserito nel messaggio")
+            return
+        await allegato.save(f"./pdf/{allegato.filename}") # salva l'allegato nella cartella pdf
+        pexpect_process[author] = pexpect.spawnu(f"./pdffields.py -i './pdf/{allegato.filename}'")
+        err = pexpect_process[author].expect(prompt)
+        response = pexpect_process[author].before
+        if err == 0: # Non si sono verificati errori
+            await msg.channel.send("### Personaggio importato")
+        else:
+            await msg.channel.send(f"### Si è verificato un errore: *{response.strip()}*")
+        del pexpect_process[author]
     # generazione di nomi
-    if ("!n" in content or "!nomi" in content) and author not in creator_process:
+    if ("!n" in content or "!nomi" in content) and author not in pexpect_process:
         # impostazioni di default
         n = 1
         language = "Latin"
@@ -401,19 +454,19 @@ Riavvia il bot""")
             except ValueError:
                 pass
         # generazione casuale
-        response = "\n".join(
-            [
-                namegen.get_name(gender, choice(language), True, "random")
-                for i in range(n)
-            ]
-        )
+        response = "\n".join([ namegen.get_name(gender, choice(language), True, "random") for i in range(n) ])
         await msg.channel.send(response)
     # messaggio d'aiuto
-    if "!h" in content and author not in creator_process:
+    if "!h" in content and author not in pexpect_process:
         response = f"""Messaggio di aiuto:
  Creazione dei personaggi giocanti:
-    !itdsc       Creazione del personaggio interattiva
-    !itdsrand    Creazione di un personaggio casuale
+    !itdsc[reate]          Creazione del personaggio interattiva
+    !itdsr[and]            Creazione di un personaggio casuale
+ Gestione dei personaggi giocanti:
+    !itdss[how]            Mostra i nomi di tutti i personaggi salvati in memoria
+    !itdsd[elete] [Nome]   Elimina un personaggio dalla memoria
+    !itdsi[mport]          Importa un personaggio allegando la sua scheda
+    !itdse[xport] [Nome]   Genera la scheda di un personaggio
  Generazione casuale di nomi:
     !n[omi] [m|f] [N] [regione|lingua]
       [m|f]     default: maschile

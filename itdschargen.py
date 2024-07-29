@@ -1640,42 +1640,71 @@ class CharacterNotFound(KeyError):
     """Permette di segnalare che non è stata trovata nessuna chiave corrispondente al personaggio cercato"""
     pass
 
-def loadp(name):
+def loadpers(name):
+    """Cerca nel database il nome passato come argomento e restituisce il Personaggio corrispondente. Se non viene trovato lancia una exception"""
     jsonp = db.get(f"itds:{name}")
     if jsonp is None:
         raise CharacterNotFound(f"Non è stato trovato alcun personaggio chiamato {name}")
     return Personaggio.from_json(jsonp)
 
 
-def savep(p):
+def savepers(p):
+    """Salva un Personaggio sul database convertendolo in json e utilizzando il nome come chiave. Se la chiave è già presente, il contenuto viene sovrascritto"""
     db.set(f"itds:{p.nome}", p.to_json())
+
+
+def deletepers(name):
+    """Rimuove il personaggio di nome <name> dal database"""
+    db.delete(f"itds:{name}")
+
+
+def showall():
+    """Printa i nomi di tutti i personaggi salvati sul database"""
+    names = db.keys("itds:*")
+    for n in names:
+        print(f"- {n.strip('itds:')}")
+
 
 from redis import exceptions as RExceptions
 
 if __name__ == "__main__":
-    from sys import argv, exit
-
-    try:
+    from sys import exit
+    import argparse
+    try: # Prova a fare ping, in modo che se il db è irraggiungibile il processo di creazione non venga avviato
         db.ping()
     except RExceptions.ConnectionError as e:
         exit(str(e))
-    random = False
-    c = None
-    for a in argv[1:]:
-        if a in ["random", "rand", "r"]:
+    parser = argparse.ArgumentParser(
+        prog="Itdschargen",
+        description="Crea personaggi e gestisci quelli già creati"
+    )
+    parser.add_argument("--create", "-c", metavar="RANDOM", nargs='?', const="nr", type=str, help="Crea un personaggio: se RANDOM è 'r', 'rand' o 'random' la creazione sarà casuale")
+    parser.add_argument("--delete", "-d", metavar="NOME", type=str, help="Cancella dalla memoria il personaggio indicato")
+    parser.add_argument("--show-all", "-s", action="store_true", help="Mostra i nomi di tutti i personaggi salvati in memoria")
+    a = parser.parse_args()
+    # le opzioni sono pensateper essere mutuamente esclusive
+    if a.create is not None:
+        random = False
+        c = None
+        if a.create in ["random", "rand", "r"]:
             random = True
-            break
-        try:
-            c = loadp(a)
-            aggiorna_personaggio(c)
-            savep(c)
-        except CharacterNotFound as e:
-            print(e)
-    while not c:
-        try:
-            c = creazione(random=random)
-            savep(c)
-        except ITDSException as e:
-            print(e)
-    print(c.nome)
-    print("Operazione completata")
+        else:
+            try:
+                c = loadpers(a)
+                aggiorna_personaggio(c)
+                savepers(c)
+            except CharacterNotFound as e:
+                print(e)
+        while not c:
+            try:
+                c = creazione(random=random)
+                savepers(c)
+            except ITDSException as e:
+                print(e)
+        print(c.nome)
+        print("Operazione completata")
+    elif a.delete is not None:
+        deletepers(a.delete)
+    elif a.show_all:
+        showall()
+    print("\n>>>\t") # indica la terminazione senza errori di delete e show
