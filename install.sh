@@ -8,10 +8,10 @@ then
   echo "Errore: redis-cli è presente, ma il servizio non è raggiungibile. Assicurati che il servizio di Redis sia attivo"
   exit 1
 fi
-echo "Se non è già presente creo uno user per accedere al database"
 if [ -z "$(redis-cli acl getuser ITDSBOT)" ] # Non è presente lo user ITDSBOT
 then
-  echo "Aggiungo lo user del database usato negli script: serviranno i permessi root"
+  redis-cli acl setuser ITDSBOT \>itds on \~itds:\* +set +get +del +keys +ping
+  echo "Aggiungo lo user del database usato negli script: serviranno i permessi root" # L'update automatico della configurazione potrebbe non funzionare su alcuni sistemi
   sudo cp /etc/redis/redis.conf /etc/redis/redis.conf.bak
   echo "user ITDSBOT >itds on ~itds:* +set +get +del +keys +ping" | sudo tee -a /etc/redis/redis.conf
 fi
