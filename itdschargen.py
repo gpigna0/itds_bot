@@ -1678,7 +1678,7 @@ if __name__ == "__main__":
         prog="Itdschargen",
         description="Crea personaggi e gestisci quelli già creati"
     )
-    parser.add_argument("--create", "-c", metavar="RANDOM", nargs='?', const="nr", type=str, help="Crea un personaggio: se RANDOM è 'r', 'rand' o 'random' la creazione sarà casuale")
+    parser.add_argument("--create", "-c", metavar="RANDOM", nargs='?', const='', type=str, help="Crea un personaggio: se RANDOM è 'r', 'rand' o 'random' la creazione sarà casuale")
     parser.add_argument("--delete", "-d", metavar="NOME", type=str, help="Cancella dalla memoria il personaggio indicato")
     parser.add_argument("--show-all", "-s", action="store_true", help="Mostra i nomi di tutti i personaggi salvati in memoria")
     a = parser.parse_args()
@@ -1688,9 +1688,9 @@ if __name__ == "__main__":
         c = None
         if a.create in ["random", "rand", "r"]:
             random = True
-        else:
+        elif a.create != '':
             try:
-                c = loadpers(a)
+                c = loadpers(a.create)
                 aggiorna_personaggio(c)
                 savepers(c)
             except CharacterNotFound as e:
