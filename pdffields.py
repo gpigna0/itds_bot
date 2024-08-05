@@ -27,7 +27,7 @@ def fill(p):
    "Anno": str(p.anno_nascita),
    "Genere": 'o' if p.genere=='maschio' else 'a',
    "Cultura": f'{p.cultura[0]}/{p.cultura[1]}',
-   "Ceto": p.ceto.name,
+   "Ceto": p.ceto,
    "Mestiere": p.mestiere,
    "Ordine": p.ordine,
    "Tentazione": p.tentazione,
@@ -196,12 +196,10 @@ def write_pdf(p):
 def import_from_pdf(path): # path o nome?
     reader = PdfReader(path)
     jsonp = reader.metadata["/CharData"]
-    p = Personaggio.from_json(jsonp)
-    savepers(p)
+    savepers(Personaggio.from_json(jsonp))
 
 
 def write_txt(p):
-    sheet_size = 200
     num_field = 12
     name_field = 23
     car_size = 4 + 2 * num_field + name_field
@@ -393,17 +391,31 @@ Denaro (1 Lira = 20 Soldi - 1 Soldo = 12 Denari)
 Equipaggiamento
 
 {lista_equip(p)}
+
+
+
+
+
+
+
+!!! JSON PER IMPORTARE IL PERSONAGGIO: NON MODIFICARE !!!
+
+JSON: {p.to_json()}
 """
     with open(f"./pdf/{p.nome}.txt", "w") as f:
         f.write(sheet)
 
 
 def import_from_txt(path):
-    pass
+    with open(path, "r") as f:
+        s = f.read().split("JSON: ")[-1] # Si assume che il json sia l'ultima stringa che inizia con 'JSON: '
+    json = s.split("\n")[0] # Elimino eventuali righe successive
+    savepers(Personaggio.from_json(json))
 
 
 from redis import exceptions as RExceptions
 from itdschargen import CharacterNotFound, Personaggio, loadpers, savepers
+from config import PDF
 import dataclasses
 
 # TODO: Adattare il codice per creare schede non-pdf nel caso di problemi con pypdf
@@ -429,10 +441,16 @@ if __name__=='__main__':
       field_value = getattr(c, field_name)
       print(f"{field_name}: {field_value}")
     print("-----------------------------------------------------------------")
-    write_pdf(c)
+    if PDF:
+        write_pdf(c)
+    else:
+        write_txt(c)
   elif a.importa is not None:
     try:
-      import_from_pdf(a.importa)
+      if ".pdf" in a.importa:
+        import_from_pdf(a.importa)
+      else:
+        import_from_txt(a.importa)
     except (KeyError, RExceptions.ConnectionError) as e:
       exit(str(e))
   print("\n>>>\t")

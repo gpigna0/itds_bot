@@ -278,6 +278,7 @@ async def chargen(msg, author: str, comp_type: int, response: str):
 
 # Il resto dell'applicazione è più o meno adattata da bot.py
 from os import remove
+from config import PDF
 import pexpect
 import namegen
 
@@ -337,8 +338,8 @@ async def on_message(msg):
             nome = response.split("\n")[-2].strip() # estrae il nome del personaggio dall'output del programma
             pexpect_process[author] = pexpect.spawnu(f"./pdffields.py -e '{nome}'") # chiama il convertitore a PDF
             pexpect_process[author].expect(pexpect.EOF) # attende il completamento della conversione
-            await msg.channel.send(f"**{author}** ha creato {nome}", file=discord.File(f'./pdf/{nome}.pdf')) # invia il file PDF sulla chat
-            remove(f"./pdf/{nome}.pdf")
+            await msg.channel.send(f"**{author}** ha creato {nome}", file=discord.File(f"./pdf/{nome}.{'pdf' if PDF else 'txt'}")) # invia il file PDF sulla chat
+            remove(f"./pdf/{nome}.{'pdf' if PDF else 'txt'}pdf")
             del pexpect_process[author] # rimuove il creator_process, riabilitando gli altri comandi
         elif comp_type == 5: # EOF: si è verificato un errore
             await msg.channel.send(f"### Si è verificato un errore: *{response.strip()}*")
@@ -363,8 +364,8 @@ async def on_message(msg):
             print(f"randomly created {nome}")
             pexpect_process[author] = pexpect.spawnu(f"./pdffields.py -e '{nome}'")
             status = pexpect_process[author].expect(prompt)
-            await msg.channel.send(f"**{author}** ha creato {nome}", file=discord.File(f"./pdf/{nome}.pdf"))
-            remove(f"./pdf/{nome}.pdf")
+            await msg.channel.send(f"**{author}** ha creato {nome}", file=discord.File(f"./pdf/{nome}.{'pdf' if PDF else 'txt'}"))
+            remove(f"./pdf/{nome}.{'pdf' if PDF else 'txt'}pdf")
         # Si è verificato un errore
         await msg.channel.send(f"### Si è verificato un errore: *{response.strip()}*")
         del pexpect_process[author]  # rimuove il creator_process
@@ -414,8 +415,8 @@ async def on_message(msg):
             err = pexpect_process[author].expect(prompt)
             response = pexpect_process[author].before
             if err == 0: # Non si sono verificati errori
-                await msg.channel.send(f"### Scheda di {nome}", file=discord.File(f"./pdf/{nome}.pdf"))
-                remove(f"./pdf/{nome}.pdf") # cancella la copia locale del file generato
+                await msg.channel.send(f"### Scheda di {nome}", file=discord.File(f"./pdf/{nome}.{'pdf' if PDF else 'txt'}pdf"))
+                remove(f"./pdf/{nome}.{'pdf' if PDF else 'txt'}pdf") # cancella la copia locale del file generato
             else:
                 await msg.channel.send(f"### Si è verificato un errore: *{response.strip()}*")
             del pexpect_process[author]
@@ -425,6 +426,9 @@ async def on_message(msg):
             allegato = msg.attachments[0]
         else:
             await msg.channel.send("File non trovato. Assicurati di averlo inserito nel messaggio")
+            return
+        if not (".pdf" in allegato or ".txt" in allegato):
+            await msg.channel.send("Il file inviato deve essere una scheda personaggio in formato pdf o txt")
             return
         await allegato.save(f"./pdf/{allegato.filename}") # salva l'allegato nella cartella pdf
         pexpect_process[author] = pexpect.spawnu(f"./pdffields.py -i './pdf/{allegato.filename}'")
