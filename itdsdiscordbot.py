@@ -239,14 +239,14 @@ async def chargen(msg, author: str, comp_type: int, response: str):
         vw = discord.ui.View()  # Costruzione della view
         for b in btn_labels:  # Ogni possibilità di scelta viene associata ad un bottone
             vw.add_item(Btn(b, author))
-        await msg.channel.send(response, view=vw)
+        await msg.channel.send(f"## {author}\n{response}", view=vw)
 
     if comp_type == 1:  # Text input
         resp= response.split("\n")
         title = resp[-2]
         boxes = resp[-1].replace(":", "").split(", ")
         vw = ModalBtn(author, title, boxes)
-        await msg.channel.send(response, view=vw)
+        await msg.channel.send(f"## {author}\n{response}", view=vw)
 
     if comp_type == 2: # Selezione multipla
         resp = response.split("\n")
@@ -257,7 +257,7 @@ async def chargen(msg, author: str, comp_type: int, response: str):
         opts = [ discord.SelectOption(label=o) for o in opts_val ]
         vw = discord.ui.View()
         vw.add_item(Menu(opts, author, qta))
-        await msg.channel.send(response, view=vw)
+        await msg.channel.send(f"## {author}\n{response}", view=vw)
 
     if comp_type == 3: # Selezione ad albero
         resp = str(response).split("\n")
@@ -273,7 +273,7 @@ async def chargen(msg, author: str, comp_type: int, response: str):
                 placeholder="Scegli una categoria da visualizzare",
             )
         )
-        await msg.channel.send("\n".join(resp[-2:]), view=vw)
+        await msg.channel.send(f"## {author}\n" + "\n".join(resp[-2:]), view=vw)
 
 
 # Il resto dell'applicazione è più o meno adattata da bot.py
@@ -317,11 +317,17 @@ async def on_message(msg):
     isbot = False  # serve nel processo di creazione per decidere come parsare content
     if msg.author == client.user:
         isbot = True
-        if content.split(" ")[0] not in pexpect_process:
+        if content.split(" ")[0].strip("*") not in pexpect_process:
             return  # ignora i propri messaggi
         else:
             content = content.split(" ")
-            author = content[0]
+            author = content[0].strip("*")
+    # interruzione di un processo pexpect
+    if "!itdsinterrupt" in content and author in pexpect_process:
+        pexpect_process[author].close()
+        del pexpect_process[author]
+        await msg.channel.send("Fatto!")
+        return
     # creazione di un personaggio già iniziata
     if author in pexpect_process and pexpect_process[author].name == "<./itdschargen.py -c>": # questo blocco è da eseguire solo per la creazione manuale
         if isbot and len(content) > 1:
@@ -466,6 +472,7 @@ async def on_message(msg):
  Creazione dei personaggi giocanti:
     !itdsc[reate]          Creazione del personaggio interattiva
     !itdsr[and]            Creazione di un personaggio casuale
+    !itdsinterrupt         Annulla il processo di creazione del personaggio (o anche quelli per la gestione dei personaggi)
  Gestione dei personaggi giocanti:
     !itdss[how]            Mostra i nomi di tutti i personaggi salvati in memoria
     !itdsd[elete] [Nome]   Elimina un personaggio dalla memoria
