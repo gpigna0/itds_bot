@@ -1275,8 +1275,13 @@ def input_info_base(genere, min, max):
             r = [ s.strip() for s in r.split(", ") ]
             if len(r) != 3:
                 r = None
+                print("\n>>>\t")
                 continue
             nome, luogo, anno = r
+            if not re.match(r"^[\w\d ]+$", nome): # Il nome può contenere solo caratteri alfanumerici e spazi
+                r = None
+                print("\n>>>\t")
+                continue
             try:
                 anno = int(anno)
                 if anno < min or anno > max:
@@ -1294,16 +1299,15 @@ def input_caratteristiche(pers, punti, min, max):
         if random_gen:
             while True:
                 pts = randint(min, max)
-                if count * 5 + pts <= punti:
+                if count * min + pts <= punti:
                     pers.caratteristiche[c.name].caratteristica = pts
                     pers.caratteristiche[c.name].modificatore = mod_base(pts)
                     break
         else:
-            m = min
-            M = max + 1
             r = None
             while r is None:
-                span = [ str(i) for i in range(m, M) ]
+                M = max if punti - count * min > max else punti - count * min
+                span = [ str(i) for i in range(min, M+1) ]
                 print(f"{c.name} (punti residui={punti})")
                 r = input(f"{', '.join(span)}<button>")
                 try:
@@ -1311,10 +1315,7 @@ def input_caratteristiche(pers, punti, min, max):
                 except Exception:
                     r = None
                     continue
-                if count * 5 + r > punti:
-                    M = r
-                    r = None
-                elif r < min or r > max:
+                if r < min or r > M:
                     r = None
                 else:
                     count -= 1
@@ -1349,14 +1350,9 @@ class ITDSException(Exception):
     pass
 
 
-# INFO: Funzione per la selezione degli eventi
-# La scelta è multipla. Se si incontra una
-# exception non è ncessario ripetere tutte le scelte:
-# quelle valide vengono comunque registrate.
-# Quando un evento viene inserito nella lista del personaggio,
-# viene anche rimosso dalla lista delle opzioni in modo
-# che se servisse ripetere alcune scelte non ci saranno duplicati
 def sel_eventi(p):
+    """Funzione per la selezione degli eventi. La scelta è multipla. Se si incontra una exception non è ncessario ripetere tutte le scelte: quelle valide vengono comunque registrate.
+Quando un evento viene inserito nella lista del personaggio, viene anche rimosso dalla lista delle opzioni in modo che se servisse ripetere alcune scelte non ci saranno duplicati"""
     opts = list(data["eventi"].keys())
     while p.retaggio > 0:
         evnt = minput("evento", opts, p.retaggio)
