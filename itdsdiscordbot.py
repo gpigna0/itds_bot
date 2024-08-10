@@ -315,14 +315,14 @@ async def on_message(msg):
     global pexpect_process
     author = str(msg.author).split("#")[0]  # estrae il nome dell'autore del messaggio
     content = msg.content
-    isbot = False  # serve nel processo di creazione per decidere come parsare content
+    isbot = False  # True se msg è del bot e si riferisce alla creazione del personaggio di un utente
     if msg.author == client.user:
-        isbot = True
-        if content.split(" ")[0].strip("*") not in pexpect_process:
-            return  # ignora i propri messaggi
-        else:
-            content = content.split(" ")
-            author = content[0].strip("*")
+        for a in pexpect_process: # cerca se il messaggio contiene un utente i pexpect_process
+            if a in content:
+                author = a
+                isbot = True
+        if not isbot:
+            return
     # interruzione di un processo pexpect
     if "!itdsinterrupt" in content and author in pexpect_process:
         pexpect_process[author].close()
@@ -331,10 +331,11 @@ async def on_message(msg):
         return
     # creazione di un personaggio già iniziata
     if author in pexpect_process and pexpect_process[author].name == "<./itdschargen.py -c>": # questo blocco è da eseguire solo per la creazione manuale
-        if isbot and len(content) > 1:
-            # la gestione di scelte multiple è gestita dal itdschargen
-            pexpect_process[author].sendline(" ".join(content[3:]))
+        if isbot and "ha scelto: " in content:
+            pexpect_process[author].sendline(content.split("ha scelto: ", 1)[-1])
             pexpect_process[author].expect(creator_prompt)
+        else:
+            return
         # gli input da parte dell'utente vengono riconosciuti separatamente
         if not isbot:
             pexpect_process[author].sendline(content)
