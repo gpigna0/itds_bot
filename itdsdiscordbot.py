@@ -327,7 +327,7 @@ async def on_message(msg):
     if "!itdsinterrupt" in content and author in pexpect_process:
         pexpect_process[author].close()
         del pexpect_process[author]
-        await msg.channel.send("Fatto!")
+        await msg.channel.send(f"Operazione terminata da {author}!")
         return
     # creazione di un personaggio già iniziata
     if author in pexpect_process and pexpect_process[author].name == "<./itdschargen.py -c>": # questo blocco è da eseguire solo per la creazione manuale
@@ -377,6 +377,7 @@ async def on_message(msg):
         # Si è verificato un errore
         await msg.channel.send(f"### Si è verificato un errore: *{response.strip()}*")
         del pexpect_process[author]  # rimuove il creator_process
+        return
     # creazione guidata di un personaggio, inizializzazione
     if "!itdsc" in content and author not in pexpect_process:
         # attiva il programma di creazione dei personaggi
@@ -389,6 +390,7 @@ async def on_message(msg):
         else:
             await msg.channel.send(f"### Si è verificato un errore: *{response.strip()}*")
             del pexpect_process[author]
+        return
     # visualizzazione dei nomi di tutti i personaggi salvati
     if "!itdss" in content and author not in pexpect_process:
         pexpect_process[author] = pexpect.spawnu("./itdschargen.py -s")
@@ -399,6 +401,7 @@ async def on_message(msg):
         else:
             await msg.channel.send(f"### Si è verificato un errore: *{response.strip()}*")
         del pexpect_process[author]
+        return
     # cancellazione di un personaggio
     if "!itdsd" in content and author not in pexpect_process:
         nome = " ".join(content.split()[1:])
@@ -413,6 +416,7 @@ async def on_message(msg):
             else:
                 await msg.channel.send(f"### Si è verificato un errore: *{response.strip()}*")
             del pexpect_process[author]
+        return
     # generazione della scheda personaggio
     if "!itdse" in content and author not in pexpect_process:
         nome = " ".join(content.split()[1:])
@@ -428,6 +432,7 @@ async def on_message(msg):
             else:
                 await msg.channel.send(f"### Si è verificato un errore: *{response.strip()}*")
             del pexpect_process[author]
+        return
     # importazione del personaggio da file
     if "!itdsi" in content and author not in pexpect_process:
         if len(msg.attachments) > 0: # considera solo il primo attachment se esiste
@@ -446,7 +451,9 @@ async def on_message(msg):
             await msg.channel.send("### Personaggio importato")
         else:
             await msg.channel.send(f"### Si è verificato un errore: *{response.strip()}*")
+        remove(f"./pdf/{allegato.filename}")
         del pexpect_process[author]
+        return
     # generazione di nomi
     if ("!n" in content or "!nomi" in content) and author not in pexpect_process:
         # impostazioni di default
@@ -468,6 +475,7 @@ async def on_message(msg):
         # generazione casuale
         response = "\n".join([ namegen.get_name(gender, choice(language), True, "random") for i in range(n) ])
         await msg.channel.send(response)
+        return
     # messaggio d'aiuto
     if "!h" in content and author not in pexpect_process:
         response = f"""Messaggio di aiuto:
@@ -495,6 +503,7 @@ async def on_message(msg):
       [vs N] confronta il risultato con un punteggio di caratteristica pari a N
     """
         await msg.channel.send(response)
+        return
 
 
 # main, lancia il bot
