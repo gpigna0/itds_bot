@@ -166,6 +166,8 @@ class ModalBtn(discord.ui.View):
     @discord.ui.button(label="Inserisci", style=discord.ButtonStyle.blurple)
     async def spawn_modal(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(TxtInput(self.author, self.title, self.boxes))
+        button.disabled = True
+        await interaction.message.edit(view=self)
 
 # Classe per gli input da bottone
 class Btn(discord.ui.Button):
@@ -229,10 +231,9 @@ class MainMenu(Menu):
         await interaction.response.edit_message(view=self.view)
 
 
-# INFO: Funzione per il processo di creazione del personaggio
-# Sulla base del prompt matchato da pexpect sceglie
-# il tipo di component da utilizzare
 async def chargen(msg, author: str, comp_type: int, response: str):
+    """Funzione per il processo di creazione del personaggio.
+Sulla base del prompt trovato da pexpect sceglie il tipo di component da utilizzare"""
     if comp_type == 0:  # Button
         btn_str = response.split("\n")[-1]  # Estrazione delle scelte
         btn_labels = rbc.findall(btn_str)  # Parsing delle scelte

@@ -418,8 +418,6 @@ from itdschargen import CharacterNotFound, Personaggio, loadpers, savepers
 from config import PDF
 import dataclasses
 
-# TODO: Adattare il codice per creare schede non-pdf nel caso di problemi con pypdf
-#       La difficoltà è scegliere come importare il peronaggio da non-pdf: Stringa in coda alla scheda dopo identificatore? doppio file txt/json?
 if __name__=='__main__':
   from sys import exit
   import argparse
