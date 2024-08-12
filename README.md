@@ -31,11 +31,11 @@ Con un po' di fortuna, le stesse cose potrebbero funzionare anche su altri siste
  - La generazione di PDF si basa su pypdf, che ha qualche problema -- ho prodotto una patch che viene installata automaticamente nell'ambiente virtuale.
  
 ### Funzionalità aggiunte
- - Processo di creazione dei personaggi guidato, sfruttando elementi come bottoni e menù a tendina che permettono
- di selezionare le opzioni senza doverle scrivere a mano. Per scelte come le informazioni di base del personaggio
- viene utilizzato un form che permette di inserire con un'unica interazione tutte le info necessarie. Rimane comunque compatibile
- la selezione delle scelte tramite messaggio semplice, con la differenza che nel caso di scelte multiple le le opzioni
- selezionate vanno separate con `, ` (virgola spazio)
+ - Processo di creazione dei personaggi guidato, sfruttando elementi come bottoni e menù a tendina che permettono di selezionare le opzioni senza doverle scrivere a mano. Per scelte come le informazioni di base del personaggio viene utilizzato un form che permette di inserire con un'unica interazione tutte le info necessarie. Rimane comunque compatibile la selezione delle scelte tramite messaggio semplice: perché le scelte vengano riconosciute esse devono essere scritte nei seguenti modi:
+   - Per scelte singole `Ho scelto: <scelta>`
+   - Per scelte multiple `Ho scelto: <scelta 1>, <scelta 2>`
+
+   Al posto di `Ho` sono accettati anche `ho`, `Ha`, `ha`.
  - Salvataggio dei personaggi persistente tramite Redis. Alcuni dati usati per la connessione al database sono definiti in `config.py`, pertanto è consigliabile cancellare e rigenerare il file tramite `install.sh` o aggiornarlo con i dati necessari.
 ### TODO
 Idee per estensioni, divise per argomento.

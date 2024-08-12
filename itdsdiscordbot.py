@@ -107,10 +107,15 @@ def roll_itds(dice=2, extra=0, score=0, skill=0, bonus_penalty=0, difficulty=1):
 # Parsing dei messaggi discord che richiedono il tiro di dadi
 import re
 
+# roll parse
 rg = r"(?P<dice>\d+)d\s*(?P<drop>\d*)(\s*a(?P<skill>\d+)){0,1}(\s*(?P<bonus_sign>\+|\-)(?P<bonus_value>\d+)){0,1}(\s*vs\s*(?P<score>\d+)){0,1}"
 rgc = re.compile(rg, re.IGNORECASE)
+# buttons parse
 rb = r"(?: ?\([0-9]+\))? ?([0-9a-zà-ùá-ú ]+)"
 rbc = re.compile(rb, re.IGNORECASE)
+# creation process parse
+rc = r"[Hh][ao] scelto: "
+rcc = re.compile(rc)
 
 
 def parse_and_roll(msg):
@@ -325,13 +330,12 @@ async def on_message(msg):
     global pexpect_process
     author = str(msg.author).split("#")[0]  # estrae il nome dell'autore del messaggio
     content = msg.content
-    isbot = False  # True se msg è del bot e si riferisce alla creazione del personaggio di un utente
     if msg.author == client.user:
-        for a in pexpect_process: # cerca se il messaggio contiene un utente i pexpect_process
+        author = None
+        for a in pexpect_process: # cerca se il messaggio contiene un utente in pexpect_process
             if a in content:
                 author = a
-                isbot = True
-        if not isbot:
+        if not author: # il messaggio va ignorato
             return
     # interruzione di un processo pexpect
     if "!itdsinterrupt" in content:
@@ -344,15 +348,11 @@ async def on_message(msg):
         return
     # creazione di un personaggio già iniziata
     if author in pexpect_process and pexpect_process[author].name == "<./itdschargen.py -c>": # questo blocco è da eseguire solo per la creazione manuale
-        if isbot and "ha scelto: " in content:
-            pexpect_process[author].sendline(content.split("ha scelto: ", 1)[-1])
+        if rcc.match(content): # Se l'utente vuole scrivere la risposta a mano il messaggio deve contenere 'H(h)o(a) scelto: ' seguito dalle scelte
+            pexpect_process[author].sendline(rcc.split(content, maxsplit=1)[-1])
             pexpect_process[author].expect(creator_prompt)
         else:
             return
-        # gli input da parte dell'utente vengono riconosciuti separatamente
-        if not isbot:
-            pexpect_process[author].sendline(content)
-            pexpect_process[author].expect(creator_prompt)
         comp_type = pexpect_process[author].expect(action_prompt)
         response = pexpect_process[author].before
         if comp_type == 4: # Creazione del personaggio terminata
