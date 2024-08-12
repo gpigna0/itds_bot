@@ -15,10 +15,10 @@ Con un po' di fortuna, le stesse cose potrebbero funzionare anche su altri siste
 ### Esecuzione
 
 #### Bot Discord
- - Il bot Discord è (al momento) pensato per essere eseguito localmente (i.e., sul proprio PC), dato che non gestisce la creazione di PG/PNG da parte di più persone contemporaneamente.
  - Per il bot Discord, bisogna quindi procurarsi un token dal Discord Developer Portal e inserirlo in `config.py`
  - Dopodiché, è sufficiente eseguire il comando `./rundiscord.py`
  - Il bot dispone di un suo help, ottenibile con `!h`
+ - Il bot permette di creare e gestire i personaggi a più utenti in contemporanea.
 
 #### Script singoli
  - Una volta completata l'installazione, è anche possibile eseguire i singoli script.

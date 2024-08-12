@@ -165,8 +165,11 @@ class ModalBtn(discord.ui.View):
         self.boxes = boxes
     @discord.ui.button(label="Inserisci", style=discord.ButtonStyle.blurple)
     async def spawn_modal(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if str(interaction.user).split("#")[0] != self.author: # accetta l'interazione solo se è del creatore del personaggio
+            await interaction.response.send_message(f"Solo {self.author} può interagire con questo messaggio")
+            return
         await interaction.response.send_modal(TxtInput(self.author, self.title, self.boxes))
-        button.disabled = True
+        button.disabled = True # evita altre interazioni
         await interaction.message.edit(view=self)
 
 # Classe per gli input da bottone
@@ -176,14 +179,15 @@ class Btn(discord.ui.Button):
         self.author = author
 
     async def callback(self, interaction: discord.Interaction):
+        if str(interaction.user).split("#")[0] != self.author: # accetta l'interazione solo se è del creatore del personaggio
+            await interaction.response.send_message(f"Solo {self.author} può interagire con questo messaggio")
+            return
         for child in self.view.children:
             child.disabled = True
         # Aggiorna la view disabilitando i components
         await interaction.response.edit_message(view=self.view)
         # Invia il messaggio con le scelte effettuate
-        await interaction.followup.send(
-            content=f"**{self.author}** ha scelto: {self.label}"
-        )
+        await interaction.followup.send(content=f"**{self.author}** ha scelto: {self.label}")
 
 
 # Classi per gli input a selezione multipla
@@ -199,6 +203,9 @@ class Menu(discord.ui.Select):
         self.author = auhtor
 
     async def callback(self, interaction: discord.Interaction):
+        if str(interaction.user).split("#")[0] != self.author: # accetta l'interazione solo se è del creatore del personaggio
+            await interaction.response.send_message(f"Solo {self.author} può interagire con questo messaggio")
+            return
         for child in self.view.children:
             child.disabled = True
         # Aggiorna la view disabilitando i components
@@ -218,6 +225,9 @@ class MainMenu(Menu):
         self.dic = dic
 
     async def callback(self, interaction: discord.Interaction):
+        if str(interaction.user).split("#")[0] != self.author: # accetta l'interazione solo se è del creatore del personaggio
+            await interaction.response.send_message(f"Solo {self.author} può interagire con questo messaggio")
+            return
         # Costruisce le opzioni per il nuovo select
         opts = [ discord.SelectOption(label=val) for val in self.dic[self.values[0]] ]
         # Rimuove tutti gli elementi della view a parte sé stesso (i buttons)
@@ -324,10 +334,13 @@ async def on_message(msg):
         if not isbot:
             return
     # interruzione di un processo pexpect
-    if "!itdsinterrupt" in content and author in pexpect_process:
-        pexpect_process[author].close()
-        del pexpect_process[author]
-        await msg.channel.send(f"Operazione terminata da {author}!")
+    if "!itdsinterrupt" in content:
+        if author in pexpect_process:
+            pexpect_process[author].close()
+            del pexpect_process[author]
+            await msg.channel.send(f"Operazione terminata da {author}!")
+        else:
+            await msg.channel.send(f"Non c'è alcun processo associato a {author}!")
         return
     # creazione di un personaggio già iniziata
     if author in pexpect_process and pexpect_process[author].name == "<./itdschargen.py -c>": # questo blocco è da eseguire solo per la creazione manuale
@@ -479,11 +492,11 @@ async def on_message(msg):
     # messaggio d'aiuto
     if "!h" in content and author not in pexpect_process:
         response = f"""Messaggio di aiuto:
- Creazione dei personaggi giocanti:
+ Creazione dei personaggi:
     !itdsc[reate]          Creazione del personaggio interattiva
     !itdsr[and]            Creazione di un personaggio casuale
     !itdsinterrupt         Annulla il processo di creazione del personaggio (o anche quelli per la gestione dei personaggi)
- Gestione dei personaggi giocanti:
+ Gestione dei personaggi:
     !itdss[how]            Mostra i nomi di tutti i personaggi salvati in memoria
     !itdsd[elete] [Nome]   Elimina un personaggio dalla memoria
     !itdsi[mport]          Importa un personaggio allegando la sua scheda
