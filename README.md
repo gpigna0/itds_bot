@@ -24,8 +24,8 @@ Con un po' di fortuna, le stesse cose potrebbero funzionare anche su altri siste
  - Una volta completata l'installazione, è anche possibile eseguire i singoli script.
  - Attivare preliminarmente l'ambiente virtuale con `. ./venv/bin/activate`
  - `namegen.py` dispone di un help abbastanza completo, ottenibile con `./namegen.py --help`
- - La generazione di personaggi casuali si ottiene con `./itdschargen.py r`. Lo script produce un file testuale nella cartella `json` con nome uguale al nome del personaggio, più l'estensione `.json`. Questo può essere convertito in PDF con `./pdffields.py json/{nome del personaggio}.json`
- - Per la creazione guidata, la procedura è identica, ma va omesso il parametro `r` nell'invocazione di `./itdschargen`
+ - Per creare nuovi personaggi e gestire quelli esistenti basta usare `itdschargen.py`, anch'esso dotato di un help che descrive tutte le possibili operazioni.
+ - Il compito di generare le schede personaggio e importare i personaggi è svolto da `pdffields.py`, con i comandi `--esporta` e `--importa`, documentati nello help
  
 ### Note
  - La generazione di PDF si basa su pypdf, che ha qualche problema -- ho prodotto una patch che viene installata automaticamente nell'ambiente virtuale.
@@ -37,6 +37,11 @@ Con un po' di fortuna, le stesse cose potrebbero funzionare anche su altri siste
 
    Al posto di `Ho` sono accettati anche `ho`, `Ha`, `ha`.
  - Salvataggio dei personaggi persistente tramite Redis. Alcuni dati usati per la connessione al database sono definiti in `config.py`, pertanto è consigliabile cancellare e rigenerare il file tramite `install.sh` o aggiornarlo con i dati necessari.
+ - Il durante la creazione viene controllato che il nome del personaggio contenga solo lettere, numeri, spazi o apostrofi. Vengono accettate anche diverse lettere accentate.
+ - In fase di installazione viene testato il corretto funzionamento di pypdf. Se ci sono errori un flag in `config.py` fa sì che le schede vengano generate usando file in formato testuale.
+ - Per l'importazione possono essere usati tutti e due i formati: come gestire l'operazione è deciso sulla base dell'estensione contenuta nel path del file (.pdf o .txt). Le informazioni per importare il personaggio sono contenute in un apposito campo nei metadati del pdf e nell'ultima parte della scheda txt.
+ - I personaggi sono salvati sul database. Quando viene creata una scheda per l'esportazione, essa viene cancellata dopo l'invio sul server. Quando si usa lo script singolo la scheda rimane salvata nella directory `pdf`. Anche le schede usate per l'importazione vengono eliminate dopo l'utilizzo dal bot.
+
 ### TODO
 Idee per estensioni, divise per argomento.
 
@@ -52,10 +57,7 @@ Nuove funzionalità o miglioramenti e feature mancanti per il generatore di pers
 #### Supporto bot/hosting/etc.
 Funzionalità necessarie per consentire l'hosting del bot ed il suo corretto funzionamento
 
- - Verificare il corretto funzionamento della creazione contemporanea da più giocatori/magistri.
- - Generare la scheda in un formato diverso se `pypdf` non funziona (banalmente in formato testuale?), eseguendo la verifica in modo automatico (tentando di creare un PG casuale subito dopo l'installazione).
  - Sanitizzare l'input dal bot, in particolare le stringhe di testo libero.
- - Non memorizzare permanentemente i pdf. Consentire agli utenti di scaricare la scheda in json in modo da limitare la necessità di mantenere i file (per limitare lo spazio impiegato dal bot). In alternativa, si potrebbero ricaricare i personaggi dal PDF (più complicato, ma credo fattibile).
 
 #### Portabilità e facilità di installazione
 Modifiche per semplificare l'installazione
