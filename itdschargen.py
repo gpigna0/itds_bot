@@ -1422,11 +1422,8 @@ def creazione(random=False):
         raise ITDSException(
             "Personaggi con modificatore di gratia negativo non possono essere nobili!"
         )  # questa eccezione non dovrebbe mai verificarsi
-    mestiere = input_mestiere(
-        p
-    )  # al momento il mestiere è solo una stringa di testo senza particolare significato
+    mestiere = input_mestiere(p)  # al momento il mestiere è solo una stringa di testo senza particolare significato
     p.mestiere = mestiere
-    # print(p.mestiere)
     # Abilità del mestiere
     p_mestiere = 6
     abilità_già_scelte = []
@@ -1603,20 +1600,11 @@ def creazione(random=False):
 
 def aggiorna_personaggio(p):
     p.pe_liberi += iinput("PE da aggiungere:", 0, 7)  # 0 per consentire di spendere PE anche senza averne aggiunti; 7 è il massimo per sessione
-    if (
-        p.pe_liberi >= 4
-        and sinput(f"aumentare o acquisire abilità? ", ["sì", "no"]) == "sì"
-    ):
+    if (p.pe_liberi >= 4 and sinput(f"aumentare o acquisire abilità? ", ["sì", "no"]) == "sì"):
         while True:
             abilità = cinput(f"abilità libere (punti residui {p.pe_liberi})", AbLibere)
             r = p.incrementa_abilità_con_pe(abilità)
-            if (
-                sinput(
-                    f"Incremento {'riuscito' if r else 'fallito'}. Aumentare o acquisire altre abilità? ",
-                    ["sì", "no"],
-                )
-                == "no"
-            ):
+            if (sinput(f"Incremento {'riuscito' if r else 'fallito'}. Aumentare o acquisire altre abilità? ", ["sì", "no"],) == "no"):
                 break
     # verifica e scelta dei focus
     for a in p.abilità:
@@ -1632,7 +1620,7 @@ from config import DB_ADDRESS, DB_PORT
 db = redis.Redis(host=DB_ADDRESS, port=DB_PORT, username="ITDSBOT", password="itds", decode_responses=True)
 
 
-class CharacterNotFound(KeyError):
+class CharacterNotFound(Exception):
     """Permette di segnalare che non è stata trovata nessuna chiave corrispondente al personaggio cercato"""
     pass
 
@@ -1646,6 +1634,8 @@ def loadpers(name):
 
 def savepers(p):
     """Salva un Personaggio sul database convertendolo in json e utilizzando il nome come chiave. Se la chiave è già presente, il contenuto viene sovrascritto"""
+    if not re.match(r"^[\w\d ]+$", p.nome):
+        raise ValueError("Il nome contiene caratteri non validi")
     db.set(f"itds:{p.nome}", p.to_json())
 
 
