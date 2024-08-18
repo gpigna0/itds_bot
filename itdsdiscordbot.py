@@ -380,15 +380,14 @@ async def on_message(msg):
         status = pexpect_process[author].expect(random_prompt)
         response = pexpect_process[author].before
         if status == 0: # La creazione del personaggio è terminata con successo
-            print(response)
             nome = response.split("\n")[-2].strip() # estrae il nome del personaggio dall'output del programma
             print(f"randomly created {nome}")
             pexpect_process[author] = pexpect.spawnu(f"./pdffields.py -e '{nome}'")
             status = pexpect_process[author].expect(prompt)
             await msg.channel.send(f"**{author}** ha creato {nome}", file=discord.File(f"./pdf/{nome}.{'pdf' if PDF else 'txt'}"))
             remove(f"./pdf/{nome}.{'pdf' if PDF else 'txt'}pdf")
-        # Si è verificato un errore
-        await msg.channel.send(f"### Si è verificato un errore: *{response.strip()}*")
+        else: # Si è verificato un errore
+            await msg.channel.send(f"### Si è verificato un errore: *{response.strip()}*")
         del pexpect_process[author]  # rimuove il creator_process
         return
     # creazione guidata di un personaggio, inizializzazione
