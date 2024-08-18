@@ -360,7 +360,7 @@ async def on_message(msg):
             pexpect_process[author] = pexpect.spawnu(f"./pdffields.py -e '{nome}'") # chiama il convertitore a PDF
             pexpect_process[author].expect(pexpect.EOF) # attende il completamento della conversione
             await msg.channel.send(f"**{author}** ha creato {nome}", file=discord.File(f"./pdf/{nome}.{'pdf' if PDF else 'txt'}")) # invia il file PDF sulla chat
-            remove(f"./pdf/{nome}.{'pdf' if PDF else 'txt'}pdf")
+            remove(f"./pdf/{nome}.{'pdf' if PDF else 'txt'}")
             del pexpect_process[author] # rimuove il creator_process, riabilitando gli altri comandi
         elif comp_type == 5: # EOF: si è verificato un errore
             await msg.channel.send(f"### Si è verificato un errore: *{response.strip()}*")
@@ -385,7 +385,7 @@ async def on_message(msg):
             pexpect_process[author] = pexpect.spawnu(f"./pdffields.py -e '{nome}'")
             status = pexpect_process[author].expect(prompt)
             await msg.channel.send(f"**{author}** ha creato {nome}", file=discord.File(f"./pdf/{nome}.{'pdf' if PDF else 'txt'}"))
-            remove(f"./pdf/{nome}.{'pdf' if PDF else 'txt'}pdf")
+            remove(f"./pdf/{nome}.{'pdf' if PDF else 'txt'}")
         else: # Si è verificato un errore
             await msg.channel.send(f"### Si è verificato un errore: *{response.strip()}*")
         del pexpect_process[author]  # rimuove il creator_process
@@ -439,8 +439,8 @@ async def on_message(msg):
             err = pexpect_process[author].expect(prompt)
             response = pexpect_process[author].before
             if err == 0: # Non si sono verificati errori
-                await msg.channel.send(f"### Scheda di {nome}", file=discord.File(f"./pdf/{nome}.{'pdf' if PDF else 'txt'}pdf"))
-                remove(f"./pdf/{nome}.{'pdf' if PDF else 'txt'}pdf") # cancella la copia locale del file generato
+                await msg.channel.send(f"### Scheda di {nome}", file=discord.File(f"./pdf/{nome}.{'pdf' if PDF else 'txt'}"))
+                remove(f"./pdf/{nome}.{'pdf' if PDF else 'txt'}") # cancella la copia locale del file generato
             else:
                 await msg.channel.send(f"### Si è verificato un errore: *{response.strip()}*")
             del pexpect_process[author]
