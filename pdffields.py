@@ -1,4 +1,5 @@
 #!/usr/bin/env python3.10
+from json.decoder import JSONDecodeError
 from pypdf import PdfReader, PdfWriter
 
 campi = ['Anno', 'Araldica_af_image', 'Armatura 1', 'Armatura 2', 'Armatura 3', 'Armi 1', 'Armi 2', 'Armi 3', 'Armi 4', 'Armi 5', 'Artigiano 1', 'Artigiano 5', 'Artigiano2', 'Artigiano3', 'Artigiano4', 'Audacia', 'Carartigiano2', 'Carartigiano3', 'Carartigiano4', 'Carartigiano5', 'Caratteristica Artigiano 1', 'Celeritas', 'Ceto', 'Critiche Residue', 'Critichetotali', 'Cultura', 'DAgilità', 'DAlchimia', 'DArchi', 'DArmiComuni', 'DArmiCorte', 'DArmiGuerra', 'DArteGuerra', 'DArtiArcane', 'DArtiLiberali', 'DAtletica', 'DAutorità', 'DBalestre', 'DCarisma', 'DCavalcare', 'DEmpatia', 'DForza', 'DFurtività', 'DGuarigione', 'DIntrattenere', 'DLotta', 'DManualità', 'DMercatura', 'DPercezione', 'DRaggirare', 'DRagionamento', 'DSopravvivenza', 'DStoriaLeggende', 'DTeologia', 'DUsiCostumi', 'DVolontà', 'Dannoarma1', 'Dannoarma2', 'Dannoarma3', 'Dannoarma4', 'Dannoarma5', 'Dartigianato1', 'Dartigianato2', 'Dartigianato3', 'Dartigianato4', 'Dartigianato5', 'Denari', 'Ego', 'Equipaggiamento 10D', 'Equipaggiamento 10S', 'Equipaggiamento 11D', 'Equipaggiamento 11S', 'Equipaggiamento 12D', 'Equipaggiamento 12S', 'Equipaggiamento 13D', 'Equipaggiamento 13S', 'Equipaggiamento 14S', 'Equipaggiamento 15S', 'Equipaggiamento 1D', 'Equipaggiamento 1S', 'Equipaggiamento 2D', 'Equipaggiamento 2S', 'Equipaggiamento 3D', 'Equipaggiamento 3S', 'Equipaggiamento 4D', 'Equipaggiamento 4S', 'Equipaggiamento 5D', 'Equipaggiamento 5S', 'Equipaggiamento 6D', 'Equipaggiamento 6S', 'Equipaggiamento 7D', 'Equipaggiamento 7S', 'Equipaggiamento 8D', 'Equipaggiamento 8S', 'Equipaggiamento 9D', 'Equipaggiamento 9S', 'Eventi 1', 'Eventi 2', 'Eventi 3', 'Eventi 4', 'Eventi 5', 'Eventi 6', 'Eventi 7', 'Fama', 'Fides', 'Focus 1', 'Focus 2', 'Focus 3', 'Focus 4', 'Focus 5', 'Focus 6', 'Fortitudo', 'Fresco residuo', 'Frescototale', 'Gartigianato1', 'Gartigianato2', 'Gartigianato3', 'Gartigianato4', 'Gartigianato5', 'Genere', 'Grado Agilità', 'Grado Alchimia', 'Grado Archi', 'Grado Armi Comuni', 'Grado Armi Corte', 'Grado Armi da Guerra', 'Grado Arte guerra', 'Grado Arti Arcane', 'Grado Arti Liberali', 'Grado Atletica', 'Grado Autorità', 'Grado Balestre', 'Grado Carisma', 'Grado Cavalcare', 'Grado Empatia', 'Grado Forza', 'Grado Furtività', 'Grado Guarigione', 'Grado Intrattenere', 'Grado Lotta', 'Grado Manualità', 'Grado Mercatura', 'Grado Percezione', 'Grado Raggirare', 'Grado Ragionamento', 'Grado Sopravvivenza', 'Grado Storia e Leggende', 'Grado Teologia', 'Grado Usi e Costumi', 'Grado Volontà', 'Graffi Residue', 'Graffitotali', 'Gratia', 'Gravi Residue', 'Gravitotali', 'Honor', 'Impietas', 'Ingombro Leggero', 'Ingombro Massimo', 'Ingombro Moderato', 'Ingombro Pesante', 'Leggere Residue', 'Leggeretotali', 'Lingue', "Lire d'oro", 'Mens', 'Mestiere', 'Misuraarma1', 'Misuraarma2', 'Misuraarma3', 'Misuraarma4', 'Misuraarma5', 'Mod Audacia', 'Mod Celeritas', 'Mod Fortitudo', 'Mod Gratia', 'Mod Mens', 'Mod Prudentia', 'Mortali Residue', 'Mortalitotali', 'Nessun Ingombro', 'Nome', 'Note Armatura 2', 'Note Armatura 3', 'Note armatura 1', 'Ordine', 'PE Liberi', 'PE spesi', 'Parata1', 'Parata2', 'Parata3', 'Parata4', 'Parata5', 'PequipD1', 'PequipD10', 'PequipD11', 'PequipD12', 'PequipD13', 'PequipD2', 'PequipD3', 'PequipD4', 'PequipD5', 'PequipD6', 'PequipD7', 'PequipD8', 'PequipD9', 'PequipS1', 'PequipS10', 'PequipS11', 'PequipS12', 'PequipS13', 'PequipS14', 'PequipS15', 'PequipS2', 'PequipS3', 'PequipS4', 'PequipS5', 'PequipS6', 'PequipS7', 'PequipS8', 'PequipS9', 'Peso totale trasportato', 'Pregiarmi1', 'Pregiarmi2', 'Pregiarmi3', 'Pregiarmi4', 'Pregiarmi5', 'Protezione Armatura', 'Prudentia', 'Ratio', 'Regioni Fama 1', 'Regioni Fama 2', 'Regioni Fama 3', 'Regioni Fama 4', 'Riflessi attuali', 'Riflessi massimi', 'Ritratto_af_image', 'Robustezza Armatura', 'Sfinito residuo', 'Sfinitototale', 'Soldi', 'Spiritoresiduo', 'Spiritototale', 'Stanco residuo', 'Stancototale', 'Superstitio', 'Talenti 1', 'Talenti10', 'Talenti11', 'Talenti12', 'Talenti13', 'Talenti14', 'Talenti2', 'Talenti3', 'Talenti4', 'Talenti5', 'Talenti6', 'Talenti7', 'Talenti8', 'Talenti9', 'Tentazione', 'Tratti 1', 'Tratti 2', 'Tratti 3', 'Tratti 4']
@@ -196,7 +197,14 @@ def write_pdf(p):
 def import_from_pdf(path): # path o nome?
     reader = PdfReader(path)
     jsonp = reader.metadata["/CharData"]
-    savepers(Personaggio.from_json(jsonp))
+    p = Personaggio.from_json(jsonp)
+    try: # controlla se p.nome esiste nel database per non sovrascriverlo
+        loadpers(p.nome)
+    except CharacterNotFound: # se non esiste si può continuare
+        pass
+    else:
+        exit(f"Personaggio non importato: {p.nome} esiste già")
+    savepers(p)
 
 
 def write_txt(p):
@@ -409,8 +417,15 @@ JSON: {p.to_json()}
 def import_from_txt(path):
     with open(path, "r") as f:
         s = f.read().split("JSON: ")[-1] # Si assume che il json sia l'ultima stringa che inizia con 'JSON: '
-    json = s.split("\n")[0] # Elimino eventuali righe successive
-    savepers(Personaggio.from_json(json))
+    jsonp = s.split("\n")[0] # Elimino eventuali righe successive
+    p = Personaggio.from_json(jsonp)
+    try: # controlla se p.nome esiste nel database per non sovrascriverlo
+        loadpers(p.nome)
+    except CharacterNotFound: # se non esiste si può continuare
+        pass
+    else:
+        exit(f"Personaggio non importato: {p.nome} esiste già")
+    savepers(p)
 
 
 from redis import exceptions as RExceptions
@@ -419,7 +434,6 @@ from config import PDF
 import dataclasses
 
 if __name__=='__main__':
-  from sys import exit
   import argparse
   parser = argparse.ArgumentParser(
     prog="Pdffields",
@@ -447,8 +461,10 @@ if __name__=='__main__':
     try:
       if ".pdf" in a.importa:
         import_from_pdf(a.importa)
-      else:
+      elif ".txt" in a.importa:
         import_from_txt(a.importa)
-    except (KeyError, RExceptions.ConnectionError) as e:
+      else:
+        exit("Non è stato fornito un path corretto. Deve terminare con .txt o .pdf")
+    except (KeyError, RExceptions.ConnectionError, JSONDecodeError, FileNotFoundError, ValueError) as e:
       exit(str(e))
   print("\n>>>\t")
