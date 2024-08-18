@@ -348,7 +348,7 @@ async def on_message(msg):
         return
     # creazione di un personaggio già iniziata
     if author in pexpect_process and pexpect_process[author].name == "<./itdschargen.py -c>": # questo blocco è da eseguire solo per la creazione manuale
-        if rcc.match(content): # Se l'utente vuole scrivere la risposta a mano il messaggio deve contenere 'H(h)o(a) scelto: ' seguito dalle scelte
+        if rcc.search(content): # Se l'utente vuole scrivere la risposta a mano il messaggio deve contenere 'H(h)o(a) scelto: ' seguito dalle scelte
             pexpect_process[author].sendline(rcc.split(content, maxsplit=1)[-1])
             pexpect_process[author].expect(creator_prompt)
         else:
