@@ -214,8 +214,7 @@ def write_txt(p):
     nl = "\n"
     lire = "Lire d'oro"
     fields = fill(p)
-    sheet = f"""
-IL TEMPO DELLA SPADA
+    sheet = f"""IL TEMPO DELLA SPADA
 Scheda Personaggio
 
 Il mio nome è {fields['Nome']}, nat{fields['Genere']} nell'Anno del Signore {fields['Anno']} da genti di Cultura {fields['Cultura']}

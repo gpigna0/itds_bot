@@ -158,9 +158,7 @@ def e_dedizione(self):
 
 
 def e_esperienza(self):
-    self.altro += (
-        "Incrementa una abilità a 3 e due a 2 oltre il normale addrestramento\n"
-    )
+    self.altro += ("Incrementa una abilità a 3 e due a 2 oltre il normale addrestramento\n")
 
 
 def e_fascino(self):
@@ -184,9 +182,7 @@ def e_istinto(self):
 
 
 def e_legame(self):
-    self.altro += (
-        "Quando collabora con uno specifico PG, ottengono anche i dadi extra\n"
-    )
+    self.altro += ("Quando collabora con uno specifico PG, ottengono anche i dadi extra\n")
 
 
 def e_nomea(self):
@@ -198,9 +194,7 @@ def e_percorso(self):
     self.spirito += 3
     v = None
     while not v:
-        v = sinput(
-            "valore", ["honor", "ego", "fides", "impietas", "superstitio", "ratio"]
-        )
+        v = sinput("valore", ["honor", "ego", "fides", "impietas", "superstitio", "ratio"])
         if self.valori[v] > 0:
             v = None
     self.valori[v] = 1
@@ -208,10 +202,7 @@ def e_percorso(self):
 
 def e_talento(self):
     self.abilità[
-        sinput(
-            "abilità base",
-            ["volontà", "carisma", "forza", "agilità", "ragionamento", "percezione"],
-        )
+        sinput("abilità base", ["volontà", "carisma", "forza", "agilità", "ragionamento", "percezione"],)
     ].dado_extra += 1
 
 
@@ -774,10 +765,7 @@ abLibere = abMestiere | { c: data["caratteristiche"][c]["abilità"] for c in dat
 # dizionario per la scelta delle armi
 armi = { t[1]: [ arma for arma in data["armi"] if data["armi"][arma].tipo == t[0] ] for t in [("P", "Punta"), ("T", "Taglio"), ("B", "Botta")] }
 # dizionario per l'acquisto degli oggetti
-oggetti = { cat: [
-        oggetto for oggetto in data["oggetti"] if data["oggetti"][oggetto].categoria == cat
-    ] for cat in TipoOggetto if cat not in ["armi", "armature"]
-}
+oggetti = { cat: [oggetto for oggetto in data["oggetti"] if data["oggetti"][oggetto].categoria == cat] for cat in TipoOggetto if cat not in ["armi", "armature"] }
 
 # Carica i dati esterni dai file YAML corrispondenti
 import yaml
@@ -833,24 +821,13 @@ Culture = StrEnum("Culture", list(data["culture"].keys()))
 Ceti = StrEnum("Ceti", list(data["ceto"].keys()))
 Lingue = CaseInsensitiveEnum("Lingue", data["lingue"])
 Caratteristiche = StrEnum("Caratteristiche", list(data["caratteristiche"].keys()))
-EAbilità = StrEnum(
-    "Abilità",
-    sum([data["caratteristiche"][d]["abilità"] for d in data["caratteristiche"]], []),
-)
+EAbilità = StrEnum("Abilità", sum([data["caratteristiche"][d]["abilità"] for d in data["caratteristiche"]], []))
 Tentazioni = StrEnum("Tentazioni", data["tentazioni"])
 Genere = StrEnum("Genere", ["maschio", "femmina"])
 AbLibere = StrEnum(
     "AbLibere",
     list(
-        set(
-            sum(
-                [
-                    data["caratteristiche"][d]["abilità"]
-                    for d in data["caratteristiche"]
-                ],
-                [],
-            )
-        ).union(set(sum([data["ceto"][d]["mestiere"] for d in data["ceto"]], [])))
+        set(sum([ data["caratteristiche"][d]["abilità"] for d in data["caratteristiche"] ], [])).union(set(sum([data["ceto"][d]["mestiere"] for d in data["ceto"]], [])))
     ),
 )
 
@@ -1129,26 +1106,18 @@ def ainput(nome, dic, pers=None, remaining=1):
     global random_gen
     if random_gen and remaining > 1:
         ab = list(professioni[pers.ceto][pers.mestiere]["abilità"])
-        sab = list(
-            [
-                p["abilità"]
-                for p in professioni[pers.ceto][pers.mestiere]["abilità_speciali"]
-            ]
-        )
+        sab = list([ p["abilità"] for p in professioni[pers.ceto][pers.mestiere]["abilità_speciali"] ])
         try:
-            l1 = [
-                a for a in ab if (a not in pers.abilità or pers.abilità[a].grado == 0)
-            ]
+            l1 = [a for a in ab if (a not in pers.abilità or pers.abilità[a].grado == 0)]
             l2 = [a for a in sab]
-            l = l1 + (
-                l2 if not len(pers.professione) and not len(pers.artigiano) else []
-            )
+            l = l1 + (l2 if not len(pers.professione) and not len(pers.artigiano) else [])
             if len(l):
                 return choice(l)
         except Exception as e:
             print("Tentativo di scegliere una abilità professionale fallito", e)
             pass
-    return tinput(nome, dic)
+    elif not random_gen:
+        return tinput(nome, dic)
 
 
 def tinput(nome, dic):
@@ -1210,7 +1179,6 @@ def distanza_ceti(ceto1, ceto2):
 
 
 def distanza_abilità(ceto, abilità):
-    ceto_ab = None
     for c in data["ceto"]:
         if abilità in data["ceto"][c]["mestiere"]:
             return distanza_ceti(c, ceto)
@@ -1220,11 +1188,7 @@ def distanza_abilità(ceto, abilità):
 def input_abilità_speciale(tipo, pers, mestiere=False):
     global random_gen
     if random_gen:
-        l = [
-            e
-            for e in professioni[pers.ceto][pers.mestiere]["abilità_speciali"]
-            if e["abilità"] == tipo
-        ]
+        l = [ e for e in professioni[pers.ceto][pers.mestiere]["abilità_speciali"] if e["abilità"] == tipo ]
         try:
             c = choice(l)
             sottotipo = None
@@ -1244,19 +1208,13 @@ def input_abilità_speciale(tipo, pers, mestiere=False):
             pass
     # print(tipo, mestiere)
     if tipo == "artigiano":
-        sottotipo = sinput(
-            "caratteristica di riferimento", ["fortitudo", "mens", "prudentia"]
-        )
+        sottotipo = sinput("caratteristica di riferimento", ["fortitudo", "mens", "prudentia"])
         nome = sinput("artigiano", data["abilità speciali"]["artigiano"][sottotipo])
-        return AbilitàSpeciale(
-            nome=nome, caratteristica=sottotipo, grado=1, mestiere=mestiere
-        )
+        return AbilitàSpeciale(nome=nome, caratteristica=sottotipo, grado=1, mestiere=mestiere)
     else:
         sottotipo = tipo.split("/")[-1]
         nome = sinput("professione", data["abilità speciali"]["professione"][sottotipo])
-        return AbilitàSpeciale(
-            nome=nome, caratteristica=sottotipo, grado=1, mestiere=mestiere
-        )
+        return AbilitàSpeciale(nome=nome, caratteristica=sottotipo, grado=1, mestiere=mestiere)
 
 
 def input_info_base(genere, min, max):
@@ -1398,10 +1356,7 @@ def creazione(random=False):
         v1 = sinput("valore", data["culture"][cultura1]["valori"])
         v2 = sinput("valore", data["culture"][cultura2]["valori"])
         while punti_valore > 0 and timeout < 10:
-            v = sinput(
-                f"valore a cui aggiungere un punto ({punti_valore} punti residui)",
-                [v1, v2],
-            )
+            v = sinput(f"valore a cui aggiungere un punto ({punti_valore} punti residui)", [v1, v2])
             if p.valori[v] < 3:
                 p.valori[v] += 1
                 punti_valore -= 1
@@ -1419,9 +1374,7 @@ def creazione(random=False):
     p.fama += data["ceto"][ceto]["retaggio"]
     p.denaro = calcolo_denaro(data["ceto"][ceto]["denaro iniziale"][0])
     if p.retaggio < 0:
-        raise ITDSException(
-            "Personaggi con modificatore di gratia negativo non possono essere nobili!"
-        )  # questa eccezione non dovrebbe mai verificarsi
+        raise ITDSException("Personaggi con modificatore di gratia negativo non possono essere nobili!")  # questa eccezione non dovrebbe mai verificarsi
     mestiere = input_mestiere(p)  # al momento il mestiere è solo una stringa di testo senza particolare significato
     p.mestiere = mestiere
     # Abilità del mestiere
@@ -1497,9 +1450,7 @@ def creazione(random=False):
                 p.abilità[ab].grado += 1
             p_libere -= d
         else:
-            print(
-                f"Abilità troppo costosa, {d} punti contro un residuo di {p_mestiere} punti"
-            )
+            print(f"Abilità troppo costosa, {d} punti contro un residuo di {p_mestiere} punti")
 
     # Calcolo dei punteggi derivati
     p.fatica_init()

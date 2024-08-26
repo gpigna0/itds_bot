@@ -76,17 +76,13 @@ def roll_itds(dice=2, extra=0, score=0, skill=0, bonus_penalty=0, difficulty=1):
     if score:
         # in questo caso, ottimizza il numero di successi
         remaining_extra = extra
-        while (
-            remaining_extra > 0 and sum(r_reduced) > score
-        ):  # Non scarta in caso in cui il risultato minimo necessario sia già raggiunto
+        while (remaining_extra > 0 and sum(r_reduced) > score):  # Non scarta in caso in cui il risultato minimo necessario sia già raggiunto
             drop.append(r_reduced[-1])
             r_reduced = r_reduced[:-1]
             remaining_extra -= 1
         result = f' tira {dice+extra}d6 {f"vs {score}" if score else ""}: {r} {f"e scarta {drop}" if len(drop) else ""}, ridotti con {skill} punti abilità a {r_reduced}, per un totale di {sum(r_reduced)}'
         successes = r_reduced.count(1)
-        success = (
-            sum(r_reduced) <= score and successes + 1 + bonus_penalty >= difficulty
-        )
+        success = (sum(r_reduced) <= score and successes + 1 + bonus_penalty >= difficulty)
         if success:
             return result + f", ottenendo **{successes+1} successi**"
         else:
@@ -98,10 +94,7 @@ def roll_itds(dice=2, extra=0, score=0, skill=0, bonus_penalty=0, difficulty=1):
             r_reduced = r_reduced[:-extra]
         result = f' tira {dice+extra}d6 {f"vs {score}" if score else ""}: {r} {f"e scarta {drop}" if len(drop) else ""} ridotti con {skill} punti abilità a {r_reduced} per un totale di {sum(r_reduced)}'
         successes = r_reduced.count(1)
-        return (
-            result
-            + f", ottenendo **{successes+1} successi**, se il tiro è inferiore al punteggio di caratteristica"
-        )
+        return (result + f", ottenendo **{successes+1} successi**, se il tiro è inferiore al punteggio di caratteristica")
 
 
 # Parsing dei messaggi discord che richiedono il tiro di dadi
@@ -116,6 +109,8 @@ rbc = re.compile(rb, re.IGNORECASE)
 # creation process parse
 rc = r"[Hh][ao] scelto: "
 rcc = re.compile(rc)
+# parsing della quantità di scelte
+rqc = re.compile(r"\d+")
 
 
 def parse_and_roll(msg):
@@ -144,8 +139,8 @@ import discord
 import json
 
 
-# Modal che contiene le caselle di testo per i vari campi da inserire
 class TxtInput(discord.ui.Modal):
+    """Modal che contiene le caselle di testo per i vari campi da inserire"""
     def __init__(self, author: str, title: str, boxes: list[str]):
         super().__init__(title=title)
         self.author = author
@@ -161,8 +156,9 @@ class TxtInput(discord.ui.Modal):
         msg = ", ".join([c.value for c in self.children])
         await interaction.response.send_message(f"**{self.author}** ha scelto: {msg}")
 
-# Classe che genera il bottone per aprire il Modal con le caselle di testo
+
 class ModalBtn(discord.ui.View):
+    """Classe che genera il bottone per aprire il Modal con le caselle di testo"""
     def __init__(self, author: str, title: str, boxes: list[str]):
         super().__init__()
         self.author = author
@@ -177,8 +173,9 @@ class ModalBtn(discord.ui.View):
         button.disabled = True # evita altre interazioni
         await interaction.message.edit(view=self)
 
-# Classe per gli input da bottone
+
 class Btn(discord.ui.Button):
+    """Classe per gli input da bottone"""
     def __init__(self, name: str, author):
         super().__init__(label=name)
         self.author = author
@@ -195,8 +192,8 @@ class Btn(discord.ui.Button):
         await interaction.followup.send(content=f"**{self.author}** ha scelto: {self.label}")
 
 
-# Classi per gli input a selezione multipla
 class Menu(discord.ui.Select):
+    """Classi per gli input a selezione multipla"""
     def __init__(self, opts, auhtor, qta=1, qta_max=None, placeholder=None):
         if len(opts) == 0:
             opts = [ discord.SelectOption(label="Non ci sono elementi da selezionare") ]
@@ -267,7 +264,7 @@ Sulla base del prompt trovato da pexpect sceglie il tipo di component da utilizz
     if comp_type == 2: # Selezione multipla
         resp = response.split("\n")
         # Parsing della penultima riga di response dove è contenuto il numero di elementi da selezionare
-        qta = int(re.findall(r"\d+", resp[-2])[0])
+        qta = int(rqc.findall(resp[-2])[0])
         opts_str = resp[-1]
         opts_val = rbc.findall(opts_str)
         opts = [ discord.SelectOption(label=o) for o in opts_val ]
@@ -308,9 +305,9 @@ intents.message_content = True  # Il bot deve poter leggere almeno i messaggi
 pexpect_process = {}  # Se è attiva una shell aperta da pexpect, va salvato l'oggetto corrispondente qui, con lo username dell'autore come chiave; questo consente di eseguire comandi che sfruttano pexpect in contemporanea da parte di utenti diversi
 # il prompt di base per le azioni diverse dalla creazione di personaggi: in questi casi \n>>>\t indica la corretta esecuzione
 prompt = ["\n>>>\t", pexpect.EOF]
-# il prompt atteso dal programma di creazione dei personaggi, indica che la stampa del messaggio è pronta
+# il prompt atteso dal programma di creazione dei personaggi, inviato finita la manipolazione dell'input in itdschargen
 creator_prompt = ["\n>>>\t"]
-# il prompt che indica qual è la prossima azione che il bot deve eseguire
+# il prompt che indica qual è la prossima azione che il bot deve eseguire per il processo di creazione
 action_prompt = ["<button>", "<txt_input>", "<choice>", "<tree-select>", "Operazione completata", pexpect.EOF]
 # prompt ricevuti nel caso di creazione casuale
 random_prompt = ["Operazione completata", pexpect.EOF]
@@ -337,6 +334,8 @@ async def on_message(msg):
                 author = a
         if not author: # il messaggio va ignorato
             return
+
+    # COMANDI
     # interruzione di un processo pexpect
     if "!itdsinterrupt" in content:
         if author in pexpect_process:
@@ -368,11 +367,62 @@ async def on_message(msg):
         else:
             await chargen(msg, author, comp_type, response)
         return
-    # tutti i comandi successivi sono vincolati a creator_process == None: durante la creazione del personaggio non è possibile eseguire altri comandi
-    # prova a parsare il messaggio come lancio di dadi ed eseguirlo
-    res = parse_and_roll(content)
-    if res and author not in pexpect_process:
+    # lancio di dadi
+    res = parse_and_roll(content) # prova a parsare il messaggio come lancio di dadi ed eseguirlo
+    if res:
         await msg.channel.send(f"**{author}**" + res)
+        return
+    # generazione di nomi
+    if "!n" in content:
+        # impostazioni di default
+        n = 1
+        language = "Latin"
+        gender = "male"
+        # lettura dei parametri dal messaggio
+        for p in content.split():
+            if p in ["female", "f"]:
+                gender = "female"
+            if p in namegen.regions:
+                language = namegen.regions[p]
+            if p in namegen.names["male"]:
+                language = [p]
+            try:
+                n = int(p)
+            except ValueError:
+                pass
+        # generazione casuale
+        response = "\n".join([ namegen.get_name(gender, choice(language), True, "random") for i in range(n) ])
+        await msg.channel.send(response)
+        return
+    # messaggio d'aiuto
+    if "!h" in content:
+        response = f"""Messaggio di aiuto:
+ Creazione dei personaggi:
+    !itdsc[reate]          Creazione del personaggio interattiva
+    !itdsr[and]            Creazione di un personaggio casuale
+    !itdsinterrupt         Annulla il processo di creazione del personaggio (o anche quelli per la gestione dei personaggi)
+ Gestione dei personaggi:
+    !itdss[how]            Mostra i nomi di tutti i personaggi salvati in memoria
+    !itdsd[elete] [Nome]   Elimina un personaggio dalla memoria
+    !itdsi[mport]          Importa un personaggio allegando la sua scheda
+    !itdse[xport] [Nome]   Genera la scheda di un personaggio
+ Generazione casuale di nomi:
+    !n[omi] [m|f] [N] [regione|lingua]
+      [m|f]     default: maschile
+      [N]       default: 1 nome
+      [regione|lingua] default: Latino
+        regioni {list(namegen.regions.keys())}
+        lingue  {list(namegen.names['male'].keys())}
+ Lancio dei dadi:
+    Nd[X] [aN] [+N|-N] [vs N]
+      Nd[X] lancia Nd6, scarta gli X più alti
+      [aN] applica ai dadi residui un punteggio di abilità pari a N
+      [+N|-N] applica N successi bonus o penalità
+      [vs N] confronta il risultato con un punteggio di caratteristica pari a N
+    """
+        await msg.channel.send(response)
+        return
+    # tutti i comandi successivi sono vincolati a creator_process == None dato che ne creano uno
     # creazione di un personaggio casuale; questo comando è autocontenuto, quindi creator_process viene creato e poi distrutto
     if "!itdsr" in content and author not in pexpect_process:
         # attiva il programma di creazione dei personaggi
@@ -465,56 +515,6 @@ async def on_message(msg):
             await msg.channel.send(f"### Si è verificato un errore: *{response.strip()}*")
         remove(f"./pdf/{allegato.filename}")
         del pexpect_process[author]
-        return
-    # generazione di nomi
-    if ("!n" in content or "!nomi" in content) and author not in pexpect_process:
-        # impostazioni di default
-        n = 1
-        language = "Latin"
-        gender = "male"
-        # lettura dei parametri dal messaggio
-        for p in content.split():
-            if p in ["female", "f"]:
-                gender = "female"
-            if p in namegen.regions:
-                language = namegen.regions[p]
-            if p in namegen.names["male"]:
-                language = [p]
-            try:
-                n = int(p)
-            except ValueError:
-                pass
-        # generazione casuale
-        response = "\n".join([ namegen.get_name(gender, choice(language), True, "random") for i in range(n) ])
-        await msg.channel.send(response)
-        return
-    # messaggio d'aiuto
-    if "!h" in content and author not in pexpect_process:
-        response = f"""Messaggio di aiuto:
- Creazione dei personaggi:
-    !itdsc[reate]          Creazione del personaggio interattiva
-    !itdsr[and]            Creazione di un personaggio casuale
-    !itdsinterrupt         Annulla il processo di creazione del personaggio (o anche quelli per la gestione dei personaggi)
- Gestione dei personaggi:
-    !itdss[how]            Mostra i nomi di tutti i personaggi salvati in memoria
-    !itdsd[elete] [Nome]   Elimina un personaggio dalla memoria
-    !itdsi[mport]          Importa un personaggio allegando la sua scheda
-    !itdse[xport] [Nome]   Genera la scheda di un personaggio
- Generazione casuale di nomi:
-    !n[omi] [m|f] [N] [regione|lingua]
-      [m|f]     default: maschile
-      [N]       default: 1 nome
-      [regione|lingua] default: Latino
-        regioni {list(namegen.regions.keys())}
-        lingue  {list(namegen.names['male'].keys())}
- Lancio dei dadi:
-    Nd[X] [aN] [+N|-N] [vs N]
-      Nd[X] lancia Nd6, scarta gli X più alti
-      [aN] applica ai dadi residui un punteggio di abilità pari a N
-      [+N|-N] applica N successi bonus o penalità
-      [vs N] confronta il risultato con un punteggio di caratteristica pari a N
-    """
-        await msg.channel.send(response)
         return
 
 
